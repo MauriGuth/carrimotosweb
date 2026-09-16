@@ -11,15 +11,15 @@
     "import:catalogo": "node scripts/import-catalogo.mjs"
   },
   "dependencies": {
-    "next": "15.5.4",
-    "react": "19.1.1",
-    "react-dom": "19.1.1"
+    "next": "^16.3.5",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.13",
     "@types/node": "22.18.1",
-    "@types/react": "19.1.13",
-    "@types/react-dom": "19.1.9",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "tailwindcss": "4.1.13",
     "typescript": "5.9.2",
     "xlsx": "0.18.5"
