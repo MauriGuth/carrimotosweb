@@ -47,16 +47,33 @@ export default function Logo({ className = 'h-10 w-auto' }: { className?: string
 Cada modelo busca su foto en `public/motos/<slug>.jpg`. Mientras no exista, se
 muestra un placeholder con la marca, así el catálogo se ve completo igual.
 
-El *slug* es el nombre del modelo en minúsculas y con guiones. Los tenés todos
-en `data/motos.ts`. Por ejemplo:
+**De dónde salen las fotos.** Las fotos de producto con fondo blanco son
+material con derechos de las terminales y los importadores. La vía correcta es
+pedirles el kit de prensa o el acceso a su portal de imágenes: ustedes venden
+esas motos y ese material existe justamente para la red de concesionarios. No
+hay que bajarlas de Google ni de la web de otro concesionario.
 
-| Modelo | Archivo |
-| --- | --- |
-| HONDA CB 300 TWISTER | `public/motos/honda-cb-300-twister.jpg` |
-| GILERA SMASH 125 CBS | `public/motos/gilera-smash-125-cbs.jpg` |
-| MOTOMEL SKUA 250 BASE | `public/motos/motomel-skua-250-base.jpg` |
+Para armar el pedido:
 
-Recomendado: JPG de ~1200×900 px, fondo claro o transparente, menos de 300 KB.
+```bash
+npm run fotos:faltan              # cuántas faltan, por marca
+node scripts/pedido-fotos.mjs --texto   # el texto a mandarle a cada importador
+node scripts/pedido-fotos.mjs --csv     # planilla marca / modelo / archivo
+```
+
+**Cómo cargarlas.** No hace falta renombrar ni editar nada a mano:
+
+1. Poné los archivos como vengan en `fotos-crudas/` (esa carpeta no se sube al
+   repo).
+2. Corré `npm run fotos`.
+3. Salen en `public/motos/<slug>.jpg`, recortadas, centradas sobre fondo
+   blanco, en 1200×900 y comprimidas.
+
+El script empareja cada archivo con su modelo comparando palabras, así que
+`Honda CB 300 Twister (1).png` va a parar a `honda-cb-300-twister.jpg` solo. Lo
+que no puede emparejar con confianza lo deja sin tocar y te lo informa, en vez
+de arriesgarse a cargar una foto en el modelo equivocado: en ese caso
+renombralo incluyendo marca y modelo completos y volvé a correrlo.
 
 ---
 

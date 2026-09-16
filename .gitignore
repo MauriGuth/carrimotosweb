@@ -11,3 +11,7 @@ next-env.d.ts
 # La planilla del local tiene números de motor y de chasis de unidades
 # físicas: no se sube al repo. Ver README.
 scripts/*.xlsx
+
+# Las fotos crudas de los importadores no van al repo: se procesan con
+# "npm run fotos" y lo que se versiona es el resultado en public/motos.
+fotos-crudas/
