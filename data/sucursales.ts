@@ -1,30 +1,40 @@
 /**
  * ──────────────────────────────────────────────────────────────────────────
- *  SUCURSALES Y VENDEDORES
+ *  SUCURSALES
  *  Este es el único archivo que hay que tocar para cambiar los datos de
- *  contacto: nombres, números de WhatsApp, direcciones y horarios.
+ *  contacto: nombres, WhatsApp, Instagram, direcciones y horarios.
  *
- *  ⚠️ PENDIENTE: los teléfonos, direcciones y nombres de abajo son de EJEMPLO.
- *     Reemplazalos por los reales antes de publicar.
+ *  ⚠️ FALTA CARGAR: los tres números de WhatsApp, las direcciones y los
+ *     horarios. Mientras `whatsapp` esté vacío, los botones de contacto de
+ *     esa sucursal usan su Instagram, que sí funciona. Apenas cargues el
+ *     número, WhatsApp pasa a tener prioridad automáticamente.
+ *
+ *     Los campos de dirección y horarios vacíos simplemente no se muestran:
+ *     no hay datos de relleno dando vueltas en la web.
  *
  *  El teléfono va en formato internacional, sin "+" ni espacios ni guiones:
- *     +54 9 280 412-3456   →   "5492804123456"
+ *     +54 9 299 412-3456   →   "5492994123456"
  * ──────────────────────────────────────────────────────────────────────────
  */
 
 export type Sucursal = {
   slug: string;
-  /** Nombre de la sucursal, como lo conoce el cliente. */
+  /** Nombre de la sucursal, como la conoce el cliente. */
   nombre: string;
-  /** Persona que atiende ese WhatsApp. */
-  vendedor: string;
-  /** Teléfono en formato internacional sin símbolos, para el link de wa.me. */
-  whatsapp: string;
+  /** Usuario de Instagram, sin la arroba. */
+  instagram: string;
+  /**
+   * Persona que atiende ese WhatsApp. Si se deja vacío, los botones usan el
+   * nombre de la sucursal ("Escribir a Centenario").
+   */
+  vendedor?: string;
+  /** Teléfono en formato internacional sin símbolos. Vacío = todavía no cargado. */
+  whatsapp?: string;
   /** Cómo se muestra el teléfono en pantalla. */
-  telefonoVisible: string;
-  direccion: string;
-  ciudad: string;
-  horarios: string;
+  telefonoVisible?: string;
+  direccion?: string;
+  ciudad?: string;
+  horarios?: string;
   /** Link a Google Maps (opcional). */
   mapsUrl?: string;
 };
@@ -33,42 +43,39 @@ export const SUCURSALES: Sucursal[] = [
   {
     slug: 'casa-central',
     nombre: 'Casa Central',
-    vendedor: 'Vendedor 1',
-    whatsapp: '5490000000001',
-    telefonoVisible: '+54 9 000 000-0001',
-    direccion: 'Dirección de la sucursal 1',
-    ciudad: 'Ciudad',
-    horarios: 'Lunes a viernes de 9 a 13 y de 16 a 20 · Sábados de 9 a 13',
+    instagram: 'carrimotos.patagonia',
   },
   {
-    slug: 'sucursal-2',
-    nombre: 'Sucursal 2',
-    vendedor: 'Vendedor 2',
-    whatsapp: '5490000000002',
-    telefonoVisible: '+54 9 000 000-0002',
-    direccion: 'Dirección de la sucursal 2',
-    ciudad: 'Ciudad',
-    horarios: 'Lunes a viernes de 9 a 13 y de 16 a 20 · Sábados de 9 a 13',
+    slug: 'centenario',
+    nombre: 'Centenario',
+    instagram: 'carrimotos.centenario',
+    ciudad: 'Centenario',
   },
   {
-    slug: 'sucursal-3',
-    nombre: 'Sucursal 3',
-    vendedor: 'Vendedor 3',
-    whatsapp: '5490000000003',
-    telefonoVisible: '+54 9 000 000-0003',
-    direccion: 'Dirección de la sucursal 3',
-    ciudad: 'Ciudad',
-    horarios: 'Lunes a viernes de 9 a 13 y de 16 a 20 · Sábados de 9 a 13',
+    slug: 'plottier',
+    nombre: 'Plottier',
+    instagram: 'carrimotos.plottier',
+    ciudad: 'Plottier',
   },
 ];
+
+/** Nombre con el que se le habla al cliente en los botones de contacto. */
+export function contactoDe(sucursal: Sucursal): string {
+  return sucursal.vendedor ?? sucursal.nombre;
+}
+
+/** Link al perfil de Instagram de la sucursal. */
+export function linkInstagram(sucursal: Sucursal): string {
+  return `https://www.instagram.com/${sucursal.instagram}/`;
+}
 
 /** Datos generales del negocio, usados en el pie y en los metadatos. */
 export const NEGOCIO = {
   nombre: 'CARRI Motos',
-  descripcionCorta: 'Concesionario oficial de motos 0km. Todas las marcas, financiación y service.',
-  instagram: 'https://www.instagram.com/carrimotos',
-  facebook: 'https://www.facebook.com/carrimotos',
-  email: 'ventas@carrimotos.com.ar',
+  descripcionCorta: 'Concesionario de motos 0km. Todas las marcas, financiación y service.',
+  /** Cuenta principal, la de Casa Central. */
+  instagram: 'https://www.instagram.com/carrimotos.patagonia/',
+  email: '',
   /** Dominio donde se publica el sitio, para los metadatos y el sitemap. */
   sitio: 'https://carrimotos.com.ar',
 };

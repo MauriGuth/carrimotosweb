@@ -181,8 +181,8 @@ export default function Home() {
       {/* ---------------------------------------------------------------- */}
       <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6">
         <Encabezado
-          titulo="Hablá con un vendedor"
-          bajada="Escribinos por WhatsApp a la sucursal que te quede más cómoda."
+          titulo="Hablá con nosotros"
+          bajada="Escribinos a la sucursal que te quede más cómoda."
         />
         <BotonesSucursales />
       </section>
