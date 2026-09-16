@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import MotoCard from './MotoCard';
+import RevelarGrilla from './RevelarGrilla';
 import { CATEGORIAS, type CategoriaSlug, type Moto } from '@/data/motos';
 
 type Props = {
@@ -216,11 +217,16 @@ export default function CatalogoCliente({ motos, categorias, marcas }: Props) {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <RevelarGrilla
+            // Al cambiar los filtros cambia la clave y las tarjetas nuevas
+            // vuelven a entrar animadas.
+            clave={`${categoria}|${marca}|${tramo}|${soloStock}|${orden}|${busqueda}`}
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
+          >
             {resultado.map((m, i) => (
               <MotoCard key={m.slug} moto={m} prioridad={i < 6} />
             ))}
-          </div>
+          </RevelarGrilla>
         )}
       </div>
     </div>

@@ -74,3 +74,120 @@
     scrollbar-gutter: stable;
   }
 }
+
+/* ────────────────────────────────────────────────────────────────────────
+   MOVIMIENTO
+   El easing cubic-bezier(.16, 1, .3, 1) (expo out) es el que da la sensación
+   de "frena suave" en todas las entradas. Las animaciones de ambiente (float,
+   orbes, marquesina) van en CSS porque no necesitan JavaScript; los reveals
+   al hacer scroll los maneja GSAP en components/Revelar.tsx.
+   ──────────────────────────────────────────────────────────────────────── */
+
+@theme {
+  --ease-suave: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes flotar {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes orbe {
+  0%,
+  100% {
+    transform: translate(0) scale(1);
+  }
+  33% {
+    transform: translate(40px, -30px) scale(1.08);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.96);
+  }
+}
+
+@keyframes orbe-inverso {
+  0%,
+  100% {
+    transform: translate(0) scale(1);
+  }
+  33% {
+    transform: translate(-35px, 25px) scale(0.95);
+  }
+  66% {
+    transform: translate(25px, -20px) scale(1.05);
+  }
+}
+
+@keyframes marquesina {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes brillo-gradiente {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@layer utilities {
+  .anim-flotar {
+    animation: flotar 6s ease-in-out infinite;
+  }
+
+  .anim-orbe {
+    animation: orbe 18s ease-in-out infinite;
+  }
+
+  .anim-orbe-inverso {
+    animation: orbe-inverso 22s ease-in-out infinite;
+  }
+
+  .anim-marquesina {
+    animation: marquesina 40s linear infinite;
+  }
+
+  /* La marquesina se frena cuando el mouse está encima, para poder leerla. */
+  .marquesina-contenedor:hover .anim-marquesina {
+    animation-play-state: paused;
+  }
+
+  /* Texto con degradado en movimiento, para los números destacados. */
+  .texto-degradado {
+    background: linear-gradient(90deg, var(--color-mist-50), var(--color-carri-hi), var(--color-mist-50));
+    background-size: 200% auto;
+    animation: brillo-gradiente 8s ease infinite;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Los reveals los esconde y muestra GSAP, nunca el CSS: si el JavaScript
+     no llega a correr, el contenido se ve igual en vez de quedar invisible. */
+}
+
+/* Accesibilidad: si la persona pidió menos movimiento, se apaga todo.
+   El contenido queda visible y quieto, nunca oculto. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+}

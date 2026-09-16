@@ -4,6 +4,8 @@ import type { Metadata } from 'next';
 import MotoImagen from '@/components/MotoImagen';
 import MotoCard from '@/components/MotoCard';
 import BotonesSucursales from '@/components/BotonesSucursales';
+import Revelar from '@/components/Revelar';
+import RevelarGrilla from '@/components/RevelarGrilla';
 import { CATEGORIAS, MOTOS } from '@/data/motos';
 import { NEGOCIO } from '@/data/sucursales';
 import { motoPorSlug, motosRelacionadas, resumenMoto } from '@/lib/catalogo';
@@ -88,7 +90,7 @@ export default async function MotoPage({ params }: Props) {
         <span className="text-mist-300">{capitalizar(moto.modelo)}</span>
       </nav>
 
-      <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+      <Revelar inmediato escalonar y={24} className="grid gap-8 lg:grid-cols-2 lg:gap-12">
         <div className="relative aspect-4/3 self-start overflow-hidden rounded-2xl border border-ink-700 bg-ink-850">
           <div className="absolute inset-0 diagonales opacity-30" aria-hidden="true" />
           <MotoImagen
@@ -159,16 +161,16 @@ export default async function MotoPage({ params }: Props) {
             <BotonesSucursales moto={moto.nombre} formato="lista" />
           </div>
         </div>
-      </div>
+      </Revelar>
 
       {relacionadas.length > 0 && (
         <section className="mt-16 border-t border-ink-700 pt-12">
           <h2 className="titulo mb-8 text-2xl text-mist-50">También te puede interesar</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <RevelarGrilla className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {relacionadas.map((m) => (
               <MotoCard key={m.slug} moto={m} />
             ))}
-          </div>
+          </RevelarGrilla>
         </section>
       )}
     </div>

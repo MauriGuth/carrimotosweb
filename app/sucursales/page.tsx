@@ -3,6 +3,7 @@ import IconoWhatsApp from '@/components/IconoWhatsApp';
 import IconoInstagram from '@/components/IconoInstagram';
 import { contactoDe, linkInstagram, SUCURSALES } from '@/data/sucursales';
 import { consultaGeneral } from '@/lib/whatsapp';
+import Revelar from '@/components/Revelar';
 
 export const metadata: Metadata = {
   title: 'Sucursales',
@@ -12,14 +13,14 @@ export const metadata: Metadata = {
 export default function SucursalesPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
-      <header className="mb-10">
+      <Revelar inmediato escalonar y={20} className="mb-10">
         <h1 className="titulo text-3xl text-mist-50 sm:text-5xl">Sucursales</h1>
         <p className="mt-3 max-w-2xl text-sm text-mist-400 sm:text-base">
           Tenemos tres locales. Escribinos al que te quede más cerca.
         </p>
-      </header>
+      </Revelar>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <Revelar escalonar escala y={24} className="grid gap-5 lg:grid-cols-3">
         {SUCURSALES.map((s) => {
           const canal = consultaGeneral(s);
           const esWhatsApp = canal.tipo === 'whatsapp';
@@ -105,7 +106,7 @@ export default function SucursalesPage() {
             </article>
           );
         })}
-      </div>
+      </Revelar>
     </div>
   );
 }
