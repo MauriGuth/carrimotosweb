@@ -70,3 +70,18 @@ export function resumenMoto(moto: Moto): string {
   if (moto.altaGama) partes.push('Alta gama');
   return partes.join(' · ');
 }
+
+/** Convierte una marca en slug de URL: "MOTO MORINI" → "moto-morini". */
+export function slugMarca(marca: string): string {
+  return marca
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/** Busca la marca a partir de su slug. undefined si no existe. */
+export function marcaPorSlug(slug: string): string | undefined {
+  return MOTOS.find((m) => slugMarca(m.marca) === slug)?.marca;
+}

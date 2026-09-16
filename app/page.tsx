@@ -106,7 +106,7 @@ export default function Home() {
           {categorias.map((c) => (
             <Link
               key={c.slug}
-              href={`/catalogo?categoria=${c.slug}`}
+              href={`/catalogo/categoria/${c.slug}`}
               className="group relative flex flex-col gap-3 overflow-hidden rounded-xl border border-ink-700 bg-ink-850 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-carri/60 hover:shadow-lg hover:shadow-black/40"
             >
               <svg

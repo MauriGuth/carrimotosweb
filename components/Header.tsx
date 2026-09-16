@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import Logo from './Logo';
 import type { CategoriaSlug } from '@/data/motos';
+import { slugMarca } from '@/lib/catalogo';
 
 type Props = {
   categorias: { slug: CategoriaSlug; nombre: string; total: number }[];
@@ -60,7 +61,7 @@ export default function Header({ categorias, marcas }: Props) {
             alAlternar={() => setDesplegable((d) => (d === 'categorias' ? null : 'categorias'))}
           >
             {categorias.map((c) => (
-              <ItemDesplegable key={c.slug} href={`/catalogo?categoria=${c.slug}`} label={c.nombre} total={c.total} />
+              <ItemDesplegable key={c.slug} href={`/catalogo/categoria/${c.slug}`} label={c.nombre} total={c.total} />
             ))}
           </Desplegable>
 
@@ -73,7 +74,7 @@ export default function Header({ categorias, marcas }: Props) {
             {marcas.map((m) => (
               <ItemDesplegable
                 key={m.marca}
-                href={`/catalogo?marca=${encodeURIComponent(m.marca)}`}
+                href={`/catalogo/marca/${slugMarca(m.marca)}`}
                 label={m.marca}
                 total={m.total}
               />
@@ -125,7 +126,7 @@ export default function Header({ categorias, marcas }: Props) {
               {categorias.map((c) => (
                 <Link
                   key={c.slug}
-                  href={`/catalogo?categoria=${c.slug}`}
+                  href={`/catalogo/categoria/${c.slug}`}
                   className="rounded-full border border-ink-700 px-3 py-1.5 text-xs text-mist-200"
                 >
                   {c.nombre}
@@ -138,7 +139,7 @@ export default function Header({ categorias, marcas }: Props) {
               {marcas.map((m) => (
                 <Link
                   key={m.marca}
-                  href={`/catalogo?marca=${encodeURIComponent(m.marca)}`}
+                  href={`/catalogo/marca/${slugMarca(m.marca)}`}
                   className="rounded-full border border-ink-700 px-3 py-1.5 text-xs text-mist-200"
                 >
                   {m.marca}

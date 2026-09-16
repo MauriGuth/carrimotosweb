@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import MotoCard from './MotoCard';
 import RevelarGrilla from './RevelarGrilla';
 import { CATEGORIAS, type CategoriaSlug, type Moto } from '@/data/motos';
@@ -10,6 +9,12 @@ type Props = {
   motos: Moto[];
   categorias: { slug: CategoriaSlug; nombre: string; total: number }[];
   marcas: { marca: string; total: number }[];
+  /**
+   * Filtro con el que arranca la página. Viene del servidor (las rutas
+   * /catalogo/marca/... y /catalogo/categoria/...), no de la URL leída en el
+   * navegador: así el HTML ya sale filtrado y la página sigue siendo estática.
+   */
+  filtroInicial?: { marca?: string; categoria?: CategoriaSlug };
 };
 
 type Orden = 'relevancia' | 'marca' | 'cc-asc' | 'cc-desc';
@@ -29,12 +34,10 @@ function normalizar(texto: string): string {
     .toLowerCase();
 }
 
-export default function CatalogoCliente({ motos, categorias, marcas }: Props) {
-  const params = useSearchParams();
-
+export default function CatalogoCliente({ motos, categorias, marcas, filtroInicial }: Props) {
   const [busqueda, setBusqueda] = useState('');
-  const [categoria, setCategoria] = useState<string>(params.get('categoria') ?? '');
-  const [marca, setMarca] = useState<string>(params.get('marca') ?? '');
+  const [categoria, setCategoria] = useState<string>(filtroInicial?.categoria ?? '');
+  const [marca, setMarca] = useState<string>(filtroInicial?.marca ?? '');
   const [tramo, setTramo] = useState<string>('');
   const [soloStock, setSoloStock] = useState(false);
   const [orden, setOrden] = useState<Orden>('relevancia');

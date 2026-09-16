@@ -8,7 +8,7 @@ import Revelar from '@/components/Revelar';
 import RevelarGrilla from '@/components/RevelarGrilla';
 import { CATEGORIAS, MOTOS } from '@/data/motos';
 import { NEGOCIO } from '@/data/sucursales';
-import { motoPorSlug, motosRelacionadas, resumenMoto } from '@/lib/catalogo';
+import { motoPorSlug, motosRelacionadas, resumenMoto, slugMarca } from '@/lib/catalogo';
 import { capitalizar } from '@/lib/formato';
 
 type Props = { params: Promise<{ slug: string }> };
@@ -83,7 +83,7 @@ export default async function MotoPage({ params }: Props) {
           Catálogo
         </Link>
         <span aria-hidden="true">/</span>
-        <Link href={`/catalogo?marca=${encodeURIComponent(moto.marca)}`} className="transition-colors hover:text-carri">
+        <Link href={`/catalogo/marca/${slugMarca(moto.marca)}`} className="transition-colors hover:text-carri">
           {moto.marca}
         </Link>
         <span aria-hidden="true">/</span>
@@ -113,7 +113,7 @@ export default async function MotoPage({ params }: Props) {
 
           <div className="mt-4 flex flex-wrap gap-2">
             <Link
-              href={`/catalogo?categoria=${moto.categoria}`}
+              href={`/catalogo/categoria/${moto.categoria}`}
               className="rounded-full border border-ink-700 px-3 py-1.5 text-xs text-mist-300 transition-colors hover:border-carri hover:text-carri"
             >
               {categoria.nombre}

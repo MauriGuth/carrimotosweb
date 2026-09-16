@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { slugMarca } from '@/lib/catalogo';
 
 type Marca = { marca: string; total: number };
 
@@ -13,7 +14,7 @@ function Fila({ marcas, duplicada }: { marcas: Marca[]; duplicada: boolean }) {
       {marcas.map((m) => (
         <li key={m.marca}>
           <Link
-            href={`/catalogo?marca=${encodeURIComponent(m.marca)}`}
+            href={`/catalogo/marca/${slugMarca(m.marca)}`}
             tabIndex={duplicada ? -1 : undefined}
             className="titulo flex items-center gap-2 whitespace-nowrap rounded-lg border border-ink-700 bg-ink-850 px-5 py-3.5 text-sm tracking-wide text-mist-200 transition-colors hover:border-carri hover:text-carri"
           >

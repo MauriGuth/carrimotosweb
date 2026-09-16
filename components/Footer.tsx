@@ -38,7 +38,7 @@ export default function Footer({ categorias }: Props) {
           <ul className="space-y-2.5">
             {categorias.map((c) => (
               <li key={c.slug}>
-                <Link href={`/catalogo?categoria=${c.slug}`} className="text-mist-300 transition-colors hover:text-carri">
+                <Link href={`/catalogo/categoria/${c.slug}`} className="text-mist-300 transition-colors hover:text-carri">
                   {c.nombre}
                 </Link>
               </li>
