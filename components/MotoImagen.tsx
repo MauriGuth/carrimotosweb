@@ -41,7 +41,7 @@ export default function MotoImagen({ slug, nombre, marca, className = '', priori
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={fotos[0]}
+      src={fotos[0].mini}
       alt={nombre}
       loading={prioridad ? 'eager' : 'lazy'}
       decoding="async"

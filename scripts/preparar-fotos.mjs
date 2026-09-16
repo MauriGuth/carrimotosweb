@@ -34,6 +34,12 @@ const SALIDA = path.join(ROOT, 'public', 'motos');
 const ANCHO = 1200;
 const ALTO = 900;
 const CALIDAD = 82;
+
+// Versión chica para las tarjetas del catálogo y la tira de miniaturas: sin
+// esto el navegador se baja la foto de 1200x900 para mostrarla a 80 píxeles.
+const ANCHO_MINI = 400;
+const ALTO_MINI = 300;
+const CALIDAD_MINI = 72;
 const UMBRAL_MATCH = 0.55;
 
 const ES_IMAGEN = /\.(jpe?g|png|webp|avif|tiff?|heic)$/i;
@@ -118,7 +124,7 @@ async function tieneFondoBlanco(origen) {
   }
 }
 
-async function procesar(origen, destino) {
+async function procesar(origen, destino, destinoMini) {
   const estudio = await tieneFondoBlanco(origen);
 
   if (estudio) {
@@ -135,6 +141,7 @@ async function procesar(origen, destino) {
       .resize(ANCHO, ALTO, { fit: 'contain', background: '#ffffff' })
       .jpeg({ quality: CALIDAD, mozjpeg: true })
       .toFile(destino);
+    await hacerMini(destino, destinoMini);
     return 'estudio';
   }
 
@@ -144,7 +151,16 @@ async function procesar(origen, destino) {
     .resize(ANCHO, ALTO, { fit: 'cover', position: 'center' })
     .jpeg({ quality: CALIDAD, mozjpeg: true })
     .toFile(destino);
+  await hacerMini(destino, destinoMini);
   return 'foto';
+}
+
+async function hacerMini(origen, destino) {
+  fs.mkdirSync(path.dirname(destino), { recursive: true });
+  await sharp(origen)
+    .resize(ANCHO_MINI, ALTO_MINI, { fit: 'cover' })
+    .jpeg({ quality: CALIDAD_MINI, mozjpeg: true })
+    .toFile(destino);
 }
 
 /* ---------------------------------------------------------------- */
@@ -222,8 +238,10 @@ async function main() {
       for (const f of fs.readdirSync(dirDestino)) {
         if (ES_IMAGEN.test(f)) fs.unlinkSync(path.join(dirDestino, f));
       }
+      fs.rmSync(path.join(dirDestino, 'mini'), { recursive: true, force: true });
       const suelta = path.join(SALIDA, `${slug}.jpg`);
       if (fs.existsSync(suelta)) fs.unlinkSync(suelta);
+      fs.rmSync(path.join(SALIDA, 'mini', `${slug}.jpg`), { force: true });
     } else if (fs.existsSync(path.join(SALIDA, slug))) {
       fs.rmSync(path.join(SALIDA, slug), { recursive: true, force: true });
     }
@@ -231,8 +249,11 @@ async function main() {
     const tipos = [];
     for (const [i, origen] of origenes.entries()) {
       const destino = galeria ? path.join(dirDestino, `${i + 1}.jpg`) : path.join(SALIDA, `${slug}.jpg`);
+      const destinoMini = galeria
+        ? path.join(dirDestino, 'mini', `${i + 1}.jpg`)
+        : path.join(SALIDA, 'mini', `${slug}.jpg`);
       try {
-        tipos.push(await procesar(origen, destino));
+        tipos.push(await procesar(origen, destino, destinoMini));
       } catch (e) {
         revisar.push({ archivo: path.basename(origen), motivo: e.message });
       }
@@ -240,7 +261,10 @@ async function main() {
 
     const kb = Math.round(
       (galeria
-        ? fs.readdirSync(dirDestino).reduce((n, f) => n + fs.statSync(path.join(dirDestino, f)).size, 0)
+        ? fs
+            .readdirSync(dirDestino)
+            .filter((f) => ES_IMAGEN.test(f))
+            .reduce((n, f) => n + fs.statSync(path.join(dirDestino, f)).size, 0)
         : fs.statSync(path.join(SALIDA, `${slug}.jpg`)).size) / 1024,
     );
     const deEstudio = tipos.filter((t) => t === 'estudio').length;

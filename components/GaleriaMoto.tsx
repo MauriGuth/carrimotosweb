@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { SinFoto } from './MotoImagen';
+import type { Foto } from '@/data/fotos';
 
 type Props = {
-  fotos: string[];
+  fotos: Foto[];
   nombre: string;
   marca: string;
 };
@@ -29,7 +30,7 @@ export default function GaleriaMoto({ fotos, nombre, marca }: Props) {
       <div className="relative aspect-4/3 overflow-hidden rounded-2xl border border-ink-700 bg-ink-850">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={fotos[activa]}
+          src={fotos[activa].grande}
           alt={`${nombre} — foto ${activa + 1} de ${fotos.length}`}
           className="h-full w-full object-cover"
           loading="eager"
@@ -47,7 +48,7 @@ export default function GaleriaMoto({ fotos, nombre, marca }: Props) {
         <div className="mt-3 grid grid-cols-5 gap-2 sm:grid-cols-6" role="group" aria-label={`Fotos de ${nombre}`}>
           {fotos.map((foto, i) => (
             <button
-              key={foto}
+              key={foto.grande}
               type="button"
               onClick={() => setActiva(i)}
               aria-label={`Ver foto ${i + 1} de ${fotos.length}`}
@@ -59,7 +60,7 @@ export default function GaleriaMoto({ fotos, nombre, marca }: Props) {
               }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={foto} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
+              <img src={foto.mini} alt="" className="h-full w-full object-cover" loading="lazy" decoding="async" />
             </button>
           ))}
         </div>
