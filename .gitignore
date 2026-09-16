@@ -1,0 +1,13 @@
+node_modules/
+.next/
+out/
+build/
+.vercel
+.env*.local
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+
+# La planilla del local tiene números de motor y de chasis de unidades
+# físicas: no se sube al repo. Ver README.
+scripts/*.xlsx
