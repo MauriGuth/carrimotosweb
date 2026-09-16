@@ -12,6 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as XLSX from 'xlsx';
+import { CAMPOS_FICHA } from '../data/campos-ficha.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -216,6 +217,53 @@ function leerAccesorios(wb) {
 }
 
 /* ------------------------------------------------------------------ */
+/* FICHA TECNICA (hoja opcional)                                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Lee la hoja FICHA, si existe. Se espera MARCA y MODELO para identificar el
+ * modelo, y una columna por campo según CAMPOS_FICHA. Las celdas vacías se
+ * omiten: la web muestra sólo lo que está cargado, nunca un dato inventado.
+ */
+function leerFichas(wb, motos) {
+  const ws = wb.Sheets['FICHA'];
+  // Sin hoja FICHA no se toca data/fichas.ts: si alguien reemplaza la planilla
+  // por una que no la trae, las fichas ya cargadas no se pierden.
+  if (!ws) return { fichas: null, sinModelo: [] };
+
+  const filas = XLSX.utils.sheet_to_json(ws, { defval: '' });
+  const porSlug = new Map(motos.map((m) => [m.slug, m]));
+  const fichas = {};
+  const sinModelo = [];
+
+  for (const fila of filas) {
+    const claves = Object.fromEntries(
+      Object.entries(fila).map(([k, v]) => [String(k).trim().toUpperCase(), v]),
+    );
+    const marcaRaw = String(claves['MARCA'] ?? '').trim().toUpperCase().replace(/\s+/g, ' ');
+    const modeloRaw = String(claves['MODELO'] ?? '').trim();
+    if (!marcaRaw || !modeloRaw) continue;
+
+    const marca = MARCA_ALIAS[marcaRaw] || marcaRaw;
+    const slug = slugify(`${marca} ${limpiarModelo(modeloRaw, marca)}`);
+
+    if (!porSlug.has(slug)) {
+      sinModelo.push(`${marcaRaw} ${modeloRaw}`);
+      continue;
+    }
+
+    const ficha = {};
+    for (const campo of CAMPOS_FICHA) {
+      const valor = String(claves[campo.columna] ?? '').trim();
+      if (valor) ficha[campo.clave] = valor.replace(/\s+/g, ' ');
+    }
+    if (Object.keys(ficha).length) fichas[slug] = ficha;
+  }
+
+  return { fichas, sinModelo };
+}
+
+/* ------------------------------------------------------------------ */
 /* Salida                                                              */
 /* ------------------------------------------------------------------ */
 
@@ -307,6 +355,33 @@ ${gruposTs}
   fs.writeFileSync(path.join(ROOT, 'data', 'accesorios.ts'), contenido);
 }
 
+function escribirFichas(fichas) {
+  const slugs = Object.keys(fichas).sort();
+  const cuerpo = slugs
+    .map((slug) => {
+      const campos = Object.entries(fichas[slug])
+        .map(([k, v]) => `    ${k}: ${JSON.stringify(v)},`)
+        .join('\n');
+      return `  ${JSON.stringify(slug)}: {\n${campos}\n  },`;
+    })
+    .join('\n');
+
+  const contenido = `${AVISO}
+import type { FichaTecnica } from './campos-ficha';
+
+/** Ficha técnica de cada modelo. Los modelos que no están acá no tienen ficha cargada. */
+export const FICHAS: Record<string, FichaTecnica> = {
+${cuerpo}
+};
+
+/** Ficha de un modelo, o un objeto vacío si todavía no se cargó. */
+export function fichaDe(slug: string): FichaTecnica {
+  return FICHAS[slug] ?? {};
+}
+`;
+  fs.writeFileSync(path.join(ROOT, 'data', 'fichas.ts'), contenido);
+}
+
 /* ------------------------------------------------------------------ */
 
 function main() {
@@ -318,10 +393,12 @@ function main() {
 
   const { motos, descartadas } = leerMotos(wb);
   const accesorios = leerAccesorios(wb);
+  const { fichas, sinModelo } = leerFichas(wb, motos);
 
   fs.mkdirSync(path.join(ROOT, 'data'), { recursive: true });
   escribirMotos(motos);
   escribirAccesorios(accesorios);
+  if (fichas) escribirFichas(fichas);
 
   const porCategoria = {};
   const sinCilindrada = [];
@@ -335,6 +412,15 @@ function main() {
   console.log(`Filas sin marca/modelo descartadas: ${descartadas}`);
   console.log('Por categoría:', porCategoria);
   console.log(`Accesorios: ${accesorios.reduce((n, g) => n + g.items.length, 0)} artículos en ${accesorios.length} rubros`);
+  if (fichas) {
+    console.log(`Fichas técnicas: ${Object.keys(fichas).length} de ${motos.length} modelos`);
+  } else {
+    console.log(`Fichas técnicas: la planilla no trae hoja FICHA, se dejó data/fichas.ts como estaba.`);
+  }
+  if (sinModelo.length) {
+    console.log(`\nFilas de la hoja FICHA que no coinciden con ningún modelo (${sinModelo.length}):`);
+    for (const n of sinModelo) console.log(`  - ${n}`);
+  }
   if (sinCilindrada.length) {
     console.log(`\nSin cilindrada en el nombre (${sinCilindrada.length}):`);
     for (const n of sinCilindrada) console.log(`  - ${n}`);

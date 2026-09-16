@@ -138,6 +138,38 @@ La planilla no trae ficha técnica ni precios de las motos, así que:
 
 ---
 
+## Fichas técnicas
+
+Cada modelo puede tener su ficha: motor, refrigeración, rodados, frenos,
+tanque, medidas, garantía y equipamiento. En la ficha del modelo se muestra en
+dos columnas, y **sólo aparecen los campos cargados**: si de una moto se conoce
+el motor pero no la velocidad máxima, esa fila no se muestra en vez de quedar
+en blanco. Los modelos sin ficha cargada no muestran la sección.
+
+**De dónde salen los datos.** De las fichas oficiales de cada terminal, la
+misma fuente que las fotos. No se copian de la web de otro concesionario: si
+ellos tienen un dato mal, lo publicaríamos nosotros, y las especificaciones
+cambian entre años y versiones del mismo modelo.
+
+**Cómo cargarlas:**
+
+1. `npm run ficha:plantilla` genera `plantilla-ficha-tecnica.xlsx`, con una
+   fila por modelo y una columna por campo. Las fichas ya cargadas vienen
+   completas, así que sirve también para revisar lo que hay.
+2. Se completa con los datos oficiales.
+3. Se pega como hoja **FICHA** en `scripts/catalogo.xlsx`.
+4. `npm run import:catalogo` regenera `data/fichas.ts`.
+
+Si la planilla no trae hoja FICHA, el import deja `data/fichas.ts` intacto: no
+se pierden las fichas ya cargadas al reemplazar la planilla por una nueva.
+
+Para agregar un campo que no está (por ejemplo, "Embrague"), se suma a
+`CAMPOS_FICHA` en `data/campos-ficha.ts` y se agrega la columna con ese mismo
+nombre en la hoja FICHA. El tipo, el importador, la plantilla y la tabla de la
+web salen todos de esa lista.
+
+---
+
 ## Desarrollo
 
 ```bash

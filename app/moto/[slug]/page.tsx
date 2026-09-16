@@ -10,6 +10,8 @@ import { CATEGORIAS, MOTOS } from '@/data/motos';
 import { NEGOCIO } from '@/data/sucursales';
 import { motoPorSlug, motosRelacionadas, resumenMoto, slugMarca } from '@/lib/catalogo';
 import { fotosDe } from '@/data/fotos';
+import { fichaDe } from '@/data/fichas';
+import FichaTecnica from '@/components/FichaTecnica';
 import { capitalizar } from '@/lib/formato';
 
 type Props = { params: Promise<{ slug: string }> };
@@ -44,17 +46,18 @@ export default async function MotoPage({ params }: Props) {
   const categoria = CATEGORIAS[moto.categoria];
   const relacionadas = motosRelacionadas(moto);
   const fotos = fotosDe(moto.slug);
+  const ficha = fichaDe(moto.slug);
 
-  const ficha: { etiqueta: string; valor: string }[] = [
+  const resumen: { etiqueta: string; valor: string }[] = [
     { etiqueta: 'Marca', valor: moto.marca },
     { etiqueta: 'Modelo', valor: capitalizar(moto.modelo) },
     { etiqueta: 'Categoría', valor: categoria.nombre },
   ];
-  if (moto.cilindrada) ficha.push({ etiqueta: 'Cilindrada', valor: `${moto.cilindrada} cc` });
+  if (!ficha.cilindrada && moto.cilindrada) resumen.push({ etiqueta: 'Cilindrada', valor: `${moto.cilindrada} cc` });
   if (moto.colores.length) {
-    ficha.push({ etiqueta: 'Colores disponibles', valor: moto.colores.map(capitalizar).join(' · ') });
+    resumen.push({ etiqueta: 'Colores disponibles', valor: moto.colores.map(capitalizar).join(' · ') });
   }
-  ficha.push({ etiqueta: 'Disponibilidad', valor: moto.enStock ? 'Entrega inmediata' : 'A pedido — consultá plazo' });
+  resumen.push({ etiqueta: 'Disponibilidad', valor: moto.enStock ? 'Entrega inmediata' : 'A pedido — consultá plazo' });
 
   // Datos estructurados para que Google entienda la ficha.
   const jsonLd = {
@@ -132,9 +135,9 @@ export default async function MotoPage({ params }: Props) {
           </div>
 
           <div className="mt-7">
-            <h2 className="titulo mb-3 text-sm tracking-widest text-mist-500">Ficha</h2>
+            <h2 className="titulo mb-3 text-sm tracking-widest text-mist-500">De un vistazo</h2>
             <dl className="overflow-hidden rounded-xl border border-ink-700">
-              {ficha.map((f, i) => (
+              {resumen.map((f, i) => (
                 <div
                   key={f.etiqueta}
                   className={`flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm ${
@@ -156,6 +159,10 @@ export default async function MotoPage({ params }: Props) {
             <BotonesSucursales moto={moto.nombre} formato="lista" />
           </div>
         </div>
+      </Revelar>
+
+      <Revelar>
+        <FichaTecnica ficha={ficha} nombre={moto.nombre} />
       </Revelar>
 
       {relacionadas.length > 0 && (

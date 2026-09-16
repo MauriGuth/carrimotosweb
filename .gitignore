@@ -15,3 +15,6 @@ scripts/*.xlsx
 # Las fotos crudas de los importadores no van al repo: se procesan con
 # "npm run fotos" y lo que se versiona es el resultado en public/motos.
 fotos-crudas/
+
+# La plantilla de fichas se genera con "npm run ficha:plantilla".
+plantilla-ficha-tecnica.xlsx
