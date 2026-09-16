@@ -61,19 +61,38 @@ node scripts/pedido-fotos.mjs --texto   # el texto a mandarle a cada importador
 node scripts/pedido-fotos.mjs --csv     # planilla marca / modelo / archivo
 ```
 
+**Cada modelo puede tener varias fotos.** En la ficha se ven como galería, con
+miniaturas; la primera es la que va en la tarjeta del catálogo.
+
 **Cómo cargarlas.** No hace falta renombrar ni editar nada a mano:
 
-1. Poné los archivos como vengan en `fotos-crudas/` (esa carpeta no se sube al
-   repo).
-2. Corré `npm run fotos`.
-3. Salen en `public/motos/<slug>.jpg`, recortadas, centradas sobre fondo
-   blanco, en 1200×900 y comprimidas.
+1. Poné las fotos en `fotos-crudas/` (esa carpeta no se sube al repo), de una
+   de estas dos formas:
 
-El script empareja cada archivo con su modelo comparando palabras, así que
-`Honda CB 300 Twister (1).png` va a parar a `honda-cb-300-twister.jpg` solo. Lo
-que no puede emparejar con confianza lo deja sin tocar y te lo informa, en vez
-de arriesgarse a cargar una foto en el modelo equivocado: en ese caso
-renombralo incluyendo marca y modelo completos y volvé a correrlo.
+   ```
+   fotos-crudas/gilera-sahel-150/     ← una carpeta por modelo, con el slug
+     IMG_4471.jpg                        de nombre. Todas van a ese modelo,
+     IMG_4472.jpg                        ordenadas por nombre de archivo.
+
+   fotos-crudas/Honda CB 300 Twister.jpg  ← o sueltas: el script adivina el
+                                             modelo por el nombre del archivo.
+   ```
+
+2. Corré `npm run fotos`.
+3. Salen en `public/motos/<slug>/1.jpg, 2.jpg…` (o `<slug>.jpg` si es una
+   sola), en 1200×900 y comprimidas.
+
+El script distingue solo entre dos tipos de foto: si detecta fondo blanco de
+estudio recorta el aire y centra la moto sobre blanco; si es una foto del salón
+recorta al encuadre 4:3, sin barras blancas.
+
+Lo que no puede emparejar con confianza lo deja sin tocar y te lo informa, en
+vez de arriesgarse a cargar una foto en el modelo equivocado: en ese caso
+renombralo incluyendo marca y modelo, o ponelo en una carpeta con el slug.
+
+El índice de fotos (`data/fotos.ts`) lo regenera el mismo comando: el navegador
+no puede listar una carpeta, así que la web necesita ese archivo para saber
+cuántas fotos tiene cada moto. No se edita a mano.
 
 ---
 

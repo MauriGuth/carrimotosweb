@@ -9,8 +9,9 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "import:catalogo": "node scripts/import-catalogo.mjs",
-    "fotos": "node --experimental-strip-types --no-warnings scripts/preparar-fotos.mjs",
-    "fotos:faltan": "node --experimental-strip-types --no-warnings scripts/pedido-fotos.mjs"
+    "fotos": "node --experimental-strip-types --no-warnings scripts/preparar-fotos.mjs && node scripts/generar-manifiesto-fotos.mjs",
+    "fotos:faltan": "node --experimental-strip-types --no-warnings scripts/pedido-fotos.mjs",
+    "fotos:manifiesto": "node scripts/generar-manifiesto-fotos.mjs"
   },
   "dependencies": {
     "gsap": "^3.15.0",

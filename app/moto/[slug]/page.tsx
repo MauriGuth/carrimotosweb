@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import MotoImagen from '@/components/MotoImagen';
+import GaleriaMoto from '@/components/GaleriaMoto';
 import MotoCard from '@/components/MotoCard';
 import BotonesSucursales from '@/components/BotonesSucursales';
 import Revelar from '@/components/Revelar';
@@ -9,6 +9,7 @@ import RevelarGrilla from '@/components/RevelarGrilla';
 import { CATEGORIAS, MOTOS } from '@/data/motos';
 import { NEGOCIO } from '@/data/sucursales';
 import { motoPorSlug, motosRelacionadas, resumenMoto, slugMarca } from '@/lib/catalogo';
+import { fotosDe } from '@/data/fotos';
 import { capitalizar } from '@/lib/formato';
 
 type Props = { params: Promise<{ slug: string }> };
@@ -42,6 +43,7 @@ export default async function MotoPage({ params }: Props) {
 
   const categoria = CATEGORIAS[moto.categoria];
   const relacionadas = motosRelacionadas(moto);
+  const fotos = fotosDe(moto.slug);
 
   const ficha: { etiqueta: string; valor: string }[] = [
     { etiqueta: 'Marca', valor: moto.marca },
@@ -91,17 +93,10 @@ export default async function MotoPage({ params }: Props) {
       </nav>
 
       <Revelar inmediato escalonar y={24} className="grid gap-8 lg:grid-cols-2 lg:gap-12">
-        <div className="relative aspect-4/3 self-start overflow-hidden rounded-2xl border border-ink-700 bg-ink-850">
-          <div className="absolute inset-0 diagonales opacity-30" aria-hidden="true" />
-          <MotoImagen
-            slug={moto.slug}
-            nombre={moto.nombre}
-            marca={moto.marca}
-            prioridad
-            className="relative h-full w-full"
-          />
+        <div className="relative">
+          <GaleriaMoto fotos={fotos} nombre={moto.nombre} marca={moto.marca} />
           {moto.enStock && (
-            <span className="titulo absolute left-4 top-4 rounded bg-carri px-3 py-1.5 text-[11px] tracking-widest text-white">
+            <span className="titulo absolute left-4 top-4 z-10 rounded bg-carri px-3 py-1.5 text-[11px] tracking-widest text-white">
               Entrega inmediata
             </span>
           )}
