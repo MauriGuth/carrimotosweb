@@ -113,12 +113,16 @@ npm run typecheck    # chequeo de tipos
 
 ## Deploy en Vercel
 
-1. Importá el repo en [vercel.com/new](https://vercel.com/new).
-2. Vercel detecta Next.js solo: no hay que configurar nada.
-3. Cada push a la rama principal publica una versión nueva.
+El proyecto ya está creado y enlazado al repo: **cada push a `main` publica una
+versión nueva automáticamente**. No hay que hacer nada más.
 
-Cuando tengas el dominio, actualizá `NEGOCIO.sitio` en `data/sucursales.ts` para
-que el sitemap y los metadatos apunten bien.
+- Proyecto: `carrimotos` (equipo *Sistema de stock*)
+- Dominio: `carrimotos.com.ar` (con `www` redirigiendo al dominio sin www)
+- URL de Vercel: https://carrimotos-sistema-de-stock.vercel.app
+
+Si algún día cambia el dominio, actualizá `NEGOCIO.sitio` en
+`data/sucursales.ts`: de ahí salen el canonical, el sitemap y los metadatos
+para compartir en redes.
 
 ---
 

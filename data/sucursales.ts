@@ -70,5 +70,5 @@ export const NEGOCIO = {
   facebook: 'https://www.facebook.com/carrimotos',
   email: 'ventas@carrimotos.com.ar',
   /** Dominio donde se publica el sitio, para los metadatos y el sitemap. */
-  sitio: 'https://www.carrimotos.com.ar',
+  sitio: 'https://carrimotos.com.ar',
 };
