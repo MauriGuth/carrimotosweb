@@ -145,6 +145,15 @@ export default async function MotoPage({ params }: Props) {
             )}
           </div>
 
+          {/* Lo que el cliente escribe en Nova (Web → Catálogo). Vacío no ocupa
+              lugar. `whitespace-pre-line` respeta los saltos de línea que haya
+              tipeado, sin habilitar HTML. */}
+          {moto.descripcion && (
+            <p className="mt-6 whitespace-pre-line text-[15px] leading-relaxed text-mist-300">
+              {moto.descripcion}
+            </p>
+          )}
+
           <div className="mt-7 rounded-xl border border-ink-700 bg-ink-900 p-5">
             <p className="titulo text-xs tracking-widest text-mist-500">Precio</p>
             <p className="titulo mt-1 text-2xl text-mist-50">Consultá por WhatsApp</p>

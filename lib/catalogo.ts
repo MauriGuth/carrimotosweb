@@ -29,6 +29,12 @@ const SEGUNDOS_DE_CACHE = 60;
 export type MotoWeb = Moto & {
   /** Foto chica para la tarjeta. null = se muestra el placeholder con la marca. */
   miniatura: string | null;
+  /**
+   * Texto libre que el cliente escribe en el panel y sale en la ficha de la
+   * moto. Solo existe si el catálogo sale de Nova; los archivos del repo no
+   * tienen descripciones.
+   */
+  descripcion: string | null;
 };
 
 export type Catalogo = {
@@ -97,6 +103,7 @@ function desdeNova(modelos: ModeloDeNova[]): Catalogo {
       enStock: m.enStock,
       altaGama: m.premium,
       miniatura: m.fotos[0]?.mini ?? null,
+      descripcion: m.descripcion?.trim() || null,
     });
 
     if (m.fotos.length) {
@@ -117,7 +124,11 @@ function desdeNova(modelos: ModeloDeNova[]): Catalogo {
 /** El catálogo de los archivos del repo, que es como venía funcionando. */
 function desdeElRepo(): Catalogo {
   return {
-    motos: MOTOS.map((m) => ({ ...m, miniatura: FOTOS[m.slug]?.[0]?.mini ?? null })),
+    motos: MOTOS.map((m) => ({
+      ...m,
+      miniatura: FOTOS[m.slug]?.[0]?.mini ?? null,
+      descripcion: null,
+    })),
     fotos: FOTOS,
     fichas: FICHAS,
     origen: 'repo',
