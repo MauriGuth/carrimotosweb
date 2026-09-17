@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import MotoCard from './MotoCard';
 import RevelarGrilla from './RevelarGrilla';
 import { CATEGORIAS, type CategoriaSlug, type Moto } from '@/data/motos';
@@ -8,7 +9,7 @@ import { CATEGORIAS, type CategoriaSlug, type Moto } from '@/data/motos';
 type Props = {
   motos: Moto[];
   categorias: { slug: CategoriaSlug; nombre: string; total: number }[];
-  marcas: { marca: string; total: number }[];
+  marcas: { marca: string; slug: string; total: number }[];
   /**
    * Filtro con el que arranca la página. Viene del servidor (las rutas
    * /catalogo/marca/... y /catalogo/categoria/...), no de la URL leída en el
@@ -41,6 +42,73 @@ function normalizar(texto: string): string {
     .toLowerCase();
 }
 
+type Filtros = {
+  busqueda: string;
+  categoria: string;
+  marca: string;
+  tramo: string;
+  soloStock: boolean;
+  orden: Orden;
+};
+
+/**
+ * Filtros → query string. Los que ya vienen implícitos en la ruta no se
+ * repiten: en /catalogo/marca/bajaj la marca no hace falta escribirla.
+ *
+ * Cuando el visitante cambia uno de esos sí se escribe, incluso vacío, que es
+ * como se distingue "no dijo nada" de "puso Todas".
+ */
+function aQuery(f: Filtros, implicito: { marca: string; categoria: string }): string {
+  const p = new URLSearchParams();
+  if (f.busqueda) p.set('q', f.busqueda);
+  if (f.categoria !== implicito.categoria) p.set('cat', f.categoria);
+  if (f.marca !== implicito.marca) p.set('marca', f.marca);
+  if (f.tramo) p.set('cc', f.tramo);
+  if (f.soloStock) p.set('stock', '1');
+  if (f.orden !== 'relevancia') p.set('orden', f.orden);
+  return p.toString();
+}
+
+/**
+ * A qué página corresponde este juego de filtros.
+ *
+ * La marca y la categoría tienen página propia —/catalogo/marca/bajaj,
+ * /catalogo/categoria/enduro— y el título, la bajada y las migas de esas
+ * páginas los escribe el servidor. Si el filtro se moviera sin cambiar de
+ * ruta, la página quedaría diciendo "MOTOS BAJAJ" arriba de una grilla de
+ * Honda.
+ *
+ * Marca y categoría pueden estar puestas las dos y en la ruta entra una sola:
+ * manda la que el visitante acaba de tocar, y la otra viaja en la query.
+ */
+function rutaCanonica(
+  f: Filtros,
+  manda: 'marca' | 'categoria',
+  marcas: { marca: string; slug: string }[],
+): { ruta: string; implicito: { marca: string; categoria: string } } {
+  const todo = { ruta: '/catalogo', implicito: { marca: '', categoria: '' } };
+
+  // Si la marca no está en la lista no hay página adonde ir: antes que mandar
+  // a /catalogo/marca/undefined, que sería un 404, se queda en el catálogo y
+  // la marca filtra desde la query.
+  const porMarca = () => {
+    const slug = marcas.find((m) => m.marca === f.marca)?.slug;
+    if (!slug) return todo;
+    return { ruta: `/catalogo/marca/${slug}`, implicito: { marca: f.marca, categoria: '' } };
+  };
+  const porCategoria = () => ({
+    ruta: `/catalogo/categoria/${f.categoria}`,
+    implicito: { marca: '', categoria: f.categoria },
+  });
+
+  if (manda === 'marca' && f.marca) return porMarca();
+  if (manda === 'categoria' && f.categoria) return porCategoria();
+  // El que se acaba de tocar quedó en "Todas": manda el otro, si quedó alguno.
+  if (f.marca) return porMarca();
+  if (f.categoria) return porCategoria();
+  return todo;
+}
+
 /**
  * Como useLayoutEffect, pero sin romper en el servidor. Corre antes de que el
  * navegador pinte, así al volver atrás no se ve un parpadeo con el catálogo
@@ -56,6 +124,9 @@ export default function CatalogoCliente({ motos, categorias, marcas, filtroInici
   const [soloStock, setSoloStock] = useState(false);
   const [orden, setOrden] = useState<Orden>('relevancia');
   const [leidaLaUrl, setLeidaLaUrl] = useState(false);
+
+  const router = useRouter();
+  const yendose = useRef(false);
 
   const marcaInicial = filtroInicial?.marca ?? '';
   const categoriaInicial = filtroInicial?.categoria ?? '';
@@ -107,20 +178,51 @@ export default function CatalogoCliente({ motos, categorias, marcas, filtroInici
   useEffect(() => {
     if (!leidaLaUrl) return;
 
-    const p = new URLSearchParams();
-    if (busqueda) p.set('q', busqueda);
-    if (categoria !== categoriaInicial) p.set('cat', categoria);
-    if (marca !== marcaInicial) p.set('marca', marca);
-    if (tramo) p.set('cc', tramo);
-    if (soloStock) p.set('stock', '1');
-    if (orden !== 'relevancia') p.set('orden', orden);
+    // Si se está yendo a otra página, la URL la pone la navegación: pisarla
+    // acá dejaría la ruta vieja con los filtros nuevos.
+    if (yendose.current) {
+      yendose.current = false;
+      return;
+    }
 
-    const query = p.toString();
+    const query = aQuery(
+      { busqueda, categoria, marca, tramo, soloStock, orden },
+      { marca: marcaInicial, categoria: categoriaInicial },
+    );
     const destino = query ? `${window.location.pathname}?${query}` : window.location.pathname;
     if (destino !== window.location.pathname + window.location.search) {
       window.history.replaceState(null, '', destino);
     }
   }, [leidaLaUrl, busqueda, categoria, marca, tramo, soloStock, orden, categoriaInicial, marcaInicial]);
+
+  /**
+   * Cambia la marca o la categoría y se muda a la página que corresponde,
+   * llevándose el resto de los filtros en la query.
+   */
+  const cambiarRuta = (manda: 'marca' | 'categoria', valor: string) => {
+    const f: Filtros = {
+      busqueda,
+      tramo,
+      soloStock,
+      orden,
+      marca: manda === 'marca' ? valor : marca,
+      categoria: manda === 'categoria' ? valor : categoria,
+    };
+
+    // Se aplica en el acto para que el control responda sin esperar la página.
+    if (manda === 'marca') setMarca(valor);
+    else setCategoria(valor);
+
+    const { ruta, implicito } = rutaCanonica(f, manda, marcas);
+    const query = aQuery(f, implicito);
+    const destino = query ? `${ruta}?${query}` : ruta;
+    if (destino === window.location.pathname + window.location.search) return;
+
+    yendose.current = true;
+    // Sin saltar arriba: el panel de filtros queda donde estaba, como cuando
+    // el filtro no cambiaba de página.
+    router.push(destino, { scroll: false });
+  };
 
   const resultado = useMemo(() => {
     const q = normalizar(busqueda.trim());
@@ -164,6 +266,19 @@ export default function CatalogoCliente({ motos, categorias, marcas, filtroInici
     setMarca('');
     setTramo('');
     setSoloStock(false);
+
+    // "Limpiar filtros" saca todos, incluido el que trae la ruta: estando en
+    // /catalogo/marca/bajaj la vuelta es al catálogo entero. El ordenamiento
+    // no es un filtro y se respeta.
+    const query = aQuery(
+      { busqueda: '', categoria: '', marca: '', tramo: '', soloStock: false, orden },
+      { marca: '', categoria: '' },
+    );
+    const destino = query ? `/catalogo?${query}` : '/catalogo';
+    if (destino === window.location.pathname + window.location.search) return;
+
+    yendose.current = true;
+    router.push(destino, { scroll: false });
   };
 
   return (
@@ -198,11 +313,11 @@ export default function CatalogoCliente({ motos, categorias, marcas, filtroInici
           </div>
 
           <Grupo titulo="Categoría">
-            <Chip activo={categoria === ''} onClick={() => setCategoria('')}>
+            <Chip activo={categoria === ''} onClick={() => cambiarRuta('categoria', '')}>
               Todas
             </Chip>
             {categorias.map((c) => (
-              <Chip key={c.slug} activo={categoria === c.slug} onClick={() => setCategoria(c.slug)}>
+              <Chip key={c.slug} activo={categoria === c.slug} onClick={() => cambiarRuta('categoria', c.slug)}>
                 {c.nombre}
               </Chip>
             ))}
@@ -226,7 +341,7 @@ export default function CatalogoCliente({ motos, categorias, marcas, filtroInici
             <select
               id="marca"
               value={marca}
-              onChange={(e) => setMarca(e.target.value)}
+              onChange={(e) => cambiarRuta('marca', e.target.value)}
               className="w-full rounded-lg border border-ink-700 bg-ink-850 px-3 py-2.5 text-sm text-mist-50 focus:border-carri focus:outline-none"
             >
               <option value="">Todas las marcas</option>

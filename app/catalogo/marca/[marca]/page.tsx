@@ -2,12 +2,12 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import VistaCatalogo from '@/components/VistaCatalogo';
 import { MOTOS } from '@/data/motos';
-import { marcaPorSlug, marcasConConteo, slugMarca } from '@/lib/catalogo';
+import { marcaPorSlug, marcasConConteo } from '@/lib/catalogo';
 
 type Props = { params: Promise<{ marca: string }> };
 
 export function generateStaticParams() {
-  return marcasConConteo().map(({ marca }) => ({ marca: slugMarca(marca) }));
+  return marcasConConteo().map(({ slug }) => ({ marca: slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

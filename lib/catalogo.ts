@@ -1,11 +1,17 @@
 import { CATEGORIAS, MOTOS, type CategoriaSlug, type Moto } from '@/data/motos';
 
-/** Marcas con su cantidad de modelos, ordenadas por cantidad. */
-export function marcasConConteo(): { marca: string; total: number }[] {
+/**
+ * Marcas con su cantidad de modelos, ordenadas por cantidad.
+ *
+ * Viene con el slug hecho para que nadie tenga que volver a calcularlo: así
+ * los componentes de cliente arman los links a /catalogo/marca/... sin
+ * importar este módulo, que se trae las 185 motos atrás.
+ */
+export function marcasConConteo(): { marca: string; slug: string; total: number }[] {
   const mapa = new Map<string, number>();
   for (const m of MOTOS) mapa.set(m.marca, (mapa.get(m.marca) ?? 0) + 1);
   return [...mapa.entries()]
-    .map(([marca, total]) => ({ marca, total }))
+    .map(([marca, total]) => ({ marca, slug: slugMarca(marca), total }))
     .sort((a, b) => b.total - a.total || a.marca.localeCompare(b.marca));
 }
 

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { MOTOS } from '@/data/motos';
 import { NEGOCIO, SITIO_INDEXABLE } from '@/data/sucursales';
-import { categoriasConConteo, marcasConConteo, slugMarca } from '@/lib/catalogo';
+import { categoriasConConteo, marcasConConteo } from '@/lib/catalogo';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   // Mientras el sitio esté en noindex no se listan páginas: sería pedirle a
@@ -19,8 +19,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   // Una página por marca y por categoría: son entradas naturales desde Google
   // ("motos honda", "motos enduro").
-  const porMarca = marcasConConteo().map(({ marca }) => ({
-    url: `${NEGOCIO.sitio}/catalogo/marca/${slugMarca(marca)}`,
+  const porMarca = marcasConConteo().map(({ slug }) => ({
+    url: `${NEGOCIO.sitio}/catalogo/marca/${slug}`,
     lastModified: ahora,
     changeFrequency: 'weekly' as const,
     priority: 0.7,

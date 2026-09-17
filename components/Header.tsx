@@ -5,11 +5,10 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import Logo from './Logo';
 import type { CategoriaSlug } from '@/data/motos';
-import { slugMarca } from '@/lib/catalogo';
 
 type Props = {
   categorias: { slug: CategoriaSlug; nombre: string; total: number }[];
-  marcas: { marca: string; total: number }[];
+  marcas: { marca: string; slug: string; total: number }[];
 };
 
 const LINKS = [
@@ -74,7 +73,7 @@ export default function Header({ categorias, marcas }: Props) {
             {marcas.map((m) => (
               <ItemDesplegable
                 key={m.marca}
-                href={`/catalogo/marca/${slugMarca(m.marca)}`}
+                href={`/catalogo/marca/${m.slug}`}
                 label={m.marca}
                 total={m.total}
               />
@@ -139,7 +138,7 @@ export default function Header({ categorias, marcas }: Props) {
               {marcas.map((m) => (
                 <Link
                   key={m.marca}
-                  href={`/catalogo/marca/${slugMarca(m.marca)}`}
+                  href={`/catalogo/marca/${m.slug}`}
                   className="rounded-full border border-ink-700 px-3 py-1.5 text-xs text-mist-200"
                 >
                   {m.marca}
