@@ -9,17 +9,6 @@ import { MOTOS } from '@/data/motos';
 import { ACCESORIOS } from '@/data/accesorios';
 import { categoriasConConteo, marcasConConteo, motosDestacadas } from '@/lib/catalogo';
 
-const ICONOS_CATEGORIA: Record<string, string> = {
-  economicas: 'M4 17a3 3 0 1 0 6 0 3 3 0 0 0-6 0m10 0a3 3 0 1 0 6 0 3 3 0 0 0-6 0M7 17h6l3-6h3M9 11h5l-2-4H8',
-  calle: 'M5 18a3 3 0 1 0 6 0 3 3 0 0 0-6 0m8 0a3 3 0 1 0 6 0 3 3 0 0 0-6 0M8 18h5l2-7h4M10 11h4l-1-4H9',
-  scooter: 'M5 17a3 3 0 1 0 6 0 3 3 0 0 0-6 0m9 0a3 3 0 1 0 6 0 3 3 0 0 0-6 0M8 17h6l1-9h3M7 12h5',
-  enduro: 'M4 16a3 3 0 1 0 6 0 3 3 0 0 0-6 0m10 0a3 3 0 1 0 6 0 3 3 0 0 0-6 0M7 16l4-7 3 7m-3-7 4-3',
-  touring: 'M4 17a3 3 0 1 0 6 0 3 3 0 0 0-6 0m10 0a3 3 0 1 0 6 0 3 3 0 0 0-6 0M7 17h6l2-8h3M9 9h5',
-  custom: 'M4 17a3 3 0 1 0 6 0 3 3 0 0 0-6 0m10 0a3 3 0 1 0 6 0 3 3 0 0 0-6 0M7 17h5l4-5h3M9 12h4',
-  ninos: 'M6 17a2.5 2.5 0 1 0 5 0 2.5 2.5 0 0 0-5 0m8 0a2.5 2.5 0 1 0 5 0 2.5 2.5 0 0 0-5 0M9 17h5l2-5h2',
-  utilitario: 'M3 16h11V7H3zm11-5h4l3 3v2h-7M6 18.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0m9 0a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0',
-};
-
 export default function Home() {
   const categorias = categoriasConConteo();
   const marcas = marcasConConteo();
@@ -107,22 +96,34 @@ export default function Home() {
             <Link
               key={c.slug}
               href={`/catalogo/categoria/${c.slug}`}
-              className="group relative flex flex-col gap-3 overflow-hidden rounded-xl border border-ink-700 bg-ink-850 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-carri/60 hover:shadow-lg hover:shadow-black/40"
+              className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-ink-700 bg-ink-850 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-carri/60 hover:shadow-lg hover:shadow-black/40"
             >
-              <svg
-                viewBox="0 0 24 24"
-                className="h-8 w-8 text-carri transition-transform duration-300 group-hover:scale-110"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+              {/* Las franjas del logo, apenas insinuadas, en vez de un ícono */}
+              <span
+                className="absolute -right-6 -top-6 h-24 w-24 rotate-12 diagonales opacity-40 transition-opacity duration-300 group-hover:opacity-70"
                 aria-hidden="true"
-              >
-                <path d={ICONOS_CATEGORIA[c.slug]} />
-              </svg>
-              <span className="titulo text-sm text-mist-50">{c.nombre}</span>
-              <span className="text-xs text-mist-500">{c.total} modelos</span>
+              />
+
+              <span className="titulo relative text-lg leading-tight text-mist-50 transition-colors duration-300 group-hover:text-carri sm:text-xl">
+                {c.nombre}
+              </span>
+
+              <span className="relative mt-6 flex items-end justify-between gap-2">
+                <span className="text-xs text-mist-500">
+                  <span className="titulo mr-1 text-base text-mist-200">{c.total}</span>
+                  modelos
+                </span>
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4 shrink-0 text-ink-600 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-carri"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  aria-hidden="true"
+                >
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </span>
             </Link>
           ))}
         </Revelar>
