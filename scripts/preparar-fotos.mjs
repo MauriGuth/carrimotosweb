@@ -1,15 +1,19 @@
 /**
  * Deja las fotos listas para la web: las lleva a 1200x900 y las comprime.
  *
- *   1. Poné las fotos en fotos-crudas/, de una de estas dos formas:
+ *   1. Poné las fotos en fotos-crudas/. Sirve cualquiera de estas formas:
  *
- *        fotos-crudas/gilera-sahel-150/       ← una carpeta por modelo
- *          IMG_4471.jpg                          (todas van a ese modelo,
- *          IMG_4472.jpg                           en orden por nombre)
+ *        fotos-crudas/BAJAJ/BAJAJ - ROUSER NS 200/   ← tal cual vienen los zips
+ *          ROUSER NS 200 01.jpg                         de cada marca: el
+ *          ROUSER NS 200 02.jpg                         script entra en las
+ *                                                       carpetas y empareja
+ *                                                       por su nombre
  *
- *        fotos-crudas/Honda CB 300 Twister.jpg ← o sueltas, y el script
- *                                                 adivina el modelo por el
- *                                                 nombre del archivo
+ *        fotos-crudas/gilera-sahel-150/              ← o una carpeta con el
+ *          IMG_4471.jpg                                 slug del modelo
+ *
+ *        fotos-crudas/Honda CB 300 Twister.jpg       ← o sueltas, emparejadas
+ *                                                       por nombre de archivo
  *   2. npm run fotos
  *
  * Salida:
@@ -17,14 +21,19 @@
  *   public/motos/<slug>.jpg               si tiene una sola
  *
  * Distingue solo entre dos tipos de foto:
- *   · Foto de estudio (fondo blanco)  → recorta el aire y centra sobre blanco.
- *   · Foto del salón                  → recorta al encuadre 4:3 sin bordes.
+ *   · Recorte de estudio (fondo transparente o blanco) → recorta el aire y lo
+ *     centra sobre blanco, para que todas queden del mismo tamaño relativo.
+ *   · Foto de verdad (salón, calle, pista) → recorta al encuadre 4:3.
+ *
+ * El orden dentro de la galería sale del zip, salvo que el modelo tenga una
+ * lista en data/orden-fotos.ts.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { MOTOS } from '../data/motos.ts';
+import { ORDEN_FOTOS } from '../data/orden-fotos.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -95,10 +104,18 @@ function emparejar(nombreArchivo) {
 /* ---------------------------------------------------------------- */
 
 /**
- * ¿Tiene fondo blanco de estudio? Mira el promedio del borde superior: si es
- * casi blanco, se trata como recorte sobre blanco; si no, como foto.
+ * ¿Es un recorte de estudio? Mira las dos esquinas de arriba y da por estudio
+ * dos casos:
+ *
+ *   · Fondo transparente. Los PNG que mandan los importadores vienen con la
+ *     moto recortada sobre alfa. Si no se mira el canal alfa, el RGB de abajo
+ *     es basura (casi siempre negro) y la foto termina sobre fondo NEGRO al
+ *     pasarla a JPG, que es justo lo contrario de lo que se busca.
+ *   · Fondo blanco liso, el recorte ya aplanado sobre blanco.
+ *
+ * Cualquier otra cosa es una foto de verdad (salón, calle, pista).
  */
-async function tieneFondoBlanco(origen) {
+async function esRecorteDeEstudio(origen) {
   try {
     const { width = 100, height = 100 } = await sharp(origen).metadata();
     const ancho = Math.max(1, Math.floor(width * 0.15));
@@ -115,8 +132,11 @@ async function tieneFondoBlanco(origen) {
     for (const region of esquinas) {
       const recorte = await sharp(origen).extract(region).toBuffer();
       const { channels } = await sharp(recorte).stats();
-      const claro = channels.slice(0, 3).every((c) => c.mean > 240 && c.stdev < 12);
-      if (!claro) return false;
+
+      const alfa = channels[3];
+      const transparente = alfa ? alfa.max < 16 : false;
+      const blanco = channels.slice(0, 3).every((c) => c.mean > 240 && c.stdev < 12);
+      if (!transparente && !blanco) return false;
     }
     return true;
   } catch {
@@ -125,7 +145,7 @@ async function tieneFondoBlanco(origen) {
 }
 
 async function procesar(origen, destino, destinoMini) {
-  const estudio = await tieneFondoBlanco(origen);
+  const estudio = await esRecorteDeEstudio(origen);
 
   if (estudio) {
     // Recorta el blanco sobrante y rearma el margen parejo, para que todas
@@ -171,43 +191,98 @@ function porNumero(a, b) {
   return a.localeCompare(b, 'es', { numeric: true, sensitivity: 'base' });
 }
 
-/** Devuelve { slug: [rutas de origen] } y la lista de lo que no pudo ubicar. */
+/**
+ * Aplica el orden de galería de data/orden-fotos.ts. Si la lista no es una
+ * permutación exacta de las fotos que llegaron —porque el zip cambió— avisa y
+ * deja el orden original, en vez de recortar o repetir fotos en silencio.
+ */
+function reordenar(grupos) {
+  const avisos = [];
+
+  for (const [slug, rutas] of grupos) {
+    const orden = ORDEN_FOTOS[slug];
+    if (!orden) continue;
+
+    const completo =
+      orden.length === rutas.length &&
+      new Set(orden).size === orden.length &&
+      orden.every((n) => Number.isInteger(n) && n >= 1 && n <= rutas.length);
+
+    if (!completo) {
+      avisos.push(
+        `${slug}: el orden de data/orden-fotos.ts no coincide con las ${rutas.length} fotos que llegaron; queda el orden del zip`,
+      );
+      continue;
+    }
+
+    grupos.set(
+      slug,
+      orden.map((n) => rutas[n - 1]),
+    );
+  }
+
+  return avisos;
+}
+
+/**
+ * Recorre fotos-crudas/ entera y arma { slug: [rutas de origen] }.
+ *
+ * Una carpeta que contiene imágenes se resuelve por su nombre: primero se
+ * prueba como slug exacto y si no, se empareja por palabras, de modo que
+ * "BAJAJ - ROUSER NS 200" cae en bajaj-rouser-ns-200 sin tocar nada. Las
+ * carpetas que sólo contienen otras carpetas (como "BAJAJ/") se atraviesan.
+ */
 function planificar() {
   const grupos = new Map();
   const revisar = [];
 
-  for (const entrada of fs.readdirSync(ENTRADA, { withFileTypes: true })) {
-    if (entrada.isDirectory()) {
-      const slug = entrada.name;
-      if (!SLUGS.has(slug)) {
-        revisar.push({ archivo: `${slug}/`, motivo: 'la carpeta no coincide con ningún slug de data/motos.ts' });
-        continue;
+  const sumar = (slug, rutas) => grupos.set(slug, [...(grupos.get(slug) ?? []), ...rutas]);
+
+  const recorrer = (dir, etiqueta) => {
+    const entradas = fs.readdirSync(dir, { withFileTypes: true });
+    const imagenes = entradas
+      .filter((e) => e.isFile() && ES_IMAGEN.test(e.name))
+      .map((e) => e.name)
+      .sort(porNumero);
+    const subcarpetas = entradas.filter((e) => e.isDirectory());
+
+    if (imagenes.length) {
+      const rutas = imagenes.map((f) => path.join(dir, f));
+
+      if (etiqueta === null) {
+        // Sueltas en la raíz: se emparejan una por una por nombre de archivo.
+        for (const ruta of rutas) {
+          const r = emparejar(path.basename(ruta));
+          if (r.estado === 'ok') sumar(r.moto.slug, [ruta]);
+          else
+            revisar.push({
+              archivo: path.relative(ENTRADA, ruta),
+              motivo:
+                r.estado === 'sin-match'
+                  ? 'no coincide con ningún modelo'
+                  : `podría ser ${r.moto.nombre}, pero hay otro parecido`,
+            });
+        }
+      } else if (SLUGS.has(etiqueta)) {
+        sumar(etiqueta, rutas);
+      } else {
+        const r = emparejar(etiqueta);
+        if (r.estado === 'ok') sumar(r.moto.slug, rutas);
+        else
+          revisar.push({
+            archivo: `${path.relative(ENTRADA, dir)}/ (${rutas.length} fotos)`,
+            motivo:
+              r.estado === 'sin-match'
+                ? 'el nombre de la carpeta no coincide con ningún modelo'
+                : `podría ser ${r.moto.nombre}, pero hay otro parecido`,
+          });
       }
-      const dentro = fs
-        .readdirSync(path.join(ENTRADA, slug))
-        .filter((f) => ES_IMAGEN.test(f))
-        .sort(porNumero)
-        .map((f) => path.join(ENTRADA, slug, f));
-      if (dentro.length) grupos.set(slug, [...(grupos.get(slug) ?? []), ...dentro]);
-      continue;
     }
 
-    if (!ES_IMAGEN.test(entrada.name)) continue;
+    for (const sub of subcarpetas) recorrer(path.join(dir, sub.name), sub.name);
+  };
 
-    const r = emparejar(entrada.name);
-    if (r.estado !== 'ok') {
-      revisar.push({
-        archivo: entrada.name,
-        motivo:
-          r.estado === 'sin-match'
-            ? 'no coincide con ningún modelo'
-            : `podría ser ${r.moto.nombre}, pero hay otro parecido`,
-      });
-      continue;
-    }
-    grupos.set(r.moto.slug, [...(grupos.get(r.moto.slug) ?? []), path.join(ENTRADA, entrada.name)]);
-  }
-
+  recorrer(ENTRADA, null);
   return { grupos, revisar };
 }
 
@@ -219,6 +294,7 @@ async function main() {
   }
 
   const { grupos, revisar } = planificar();
+  for (const aviso of reordenar(grupos)) console.warn(`  ! ${aviso}`);
 
   if (!grupos.size && !revisar.length) {
     console.log('No hay imágenes en fotos-crudas/');
