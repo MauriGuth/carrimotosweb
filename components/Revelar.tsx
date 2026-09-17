@@ -51,21 +51,41 @@ export default function Revelar({
       const objetivos = escalonar ? Array.from(nodo.children) : [nodo];
       if (!objetivos.length) return;
 
-      gsap.from(objetivos, {
-        opacity: 0,
-        y,
-        ...(escala ? { scale: 0.94 } : {}),
-        duration: DURACION,
-        ease: EASE,
-        delay: retraso,
-        stagger: escalonar ? ESCALONADO : 0,
-        ...(inmediato
-          ? {}
-          : { scrollTrigger: { trigger: nodo, start: 'top 85%', once: true } }),
-      });
+      // Se usa fromTo y no from a propósito. `from` toma el estado actual como
+      // destino: si el efecto vuelve a correr sobre un elemento que quedó en
+      // opacity 0, el nuevo tween anima de 0 a 0 y el contenido no aparece
+      // nunca. Con fromTo los dos extremos están escritos, así que el destino
+      // siempre es visible por más veces que se cree la animación.
+      gsap.fromTo(
+        objetivos,
+        {
+          opacity: 0,
+          y,
+          ...(escala ? { scale: 0.94 } : {}),
+        },
+        {
+          opacity: 1,
+          y: 0,
+          ...(escala ? { scale: 1 } : {}),
+          duration: DURACION,
+          ease: EASE,
+          delay: retraso,
+          stagger: escalonar ? ESCALONADO : 0,
+          overwrite: 'auto',
+          ...(inmediato
+            ? {}
+            : { scrollTrigger: { trigger: nodo, start: 'top 85%', once: true } }),
+        },
+      );
     });
 
-    return () => mm.revert();
+    return () => {
+      mm.revert();
+      // Red de seguridad: si algo se desmonta a mitad de la animación, que el
+      // contenido quede visible y no en el estado inicial escondido.
+      const objetivos = escalonar ? Array.from(nodo.children) : [nodo];
+      gsap.set(objetivos, { clearProps: 'opacity,transform' });
+    };
   }, [escalonar, y, retraso, escala, inmediato]);
 
   return (
