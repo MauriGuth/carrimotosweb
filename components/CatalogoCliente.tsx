@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import MotoCard from './MotoCard';
 import RevelarGrilla from './RevelarGrilla';
 import { CATEGORIAS, type CategoriaSlug, type Moto } from '@/data/motos';
@@ -19,6 +19,13 @@ type Props = {
 
 type Orden = 'relevancia' | 'marca' | 'cc-asc' | 'cc-desc';
 
+const ORDENES: { id: Orden; label: string }[] = [
+  { id: 'relevancia', label: 'Relevancia' },
+  { id: 'marca', label: 'Marca y modelo' },
+  { id: 'cc-asc', label: 'Menor cilindrada' },
+  { id: 'cc-desc', label: 'Mayor cilindrada' },
+];
+
 const TRAMOS_CC: { id: string; label: string; min: number; max: number }[] = [
   { id: 'hasta-125', label: 'Hasta 125cc', min: 0, max: 125 },
   { id: '126-250', label: '126 a 250cc', min: 126, max: 250 },
@@ -34,6 +41,13 @@ function normalizar(texto: string): string {
     .toLowerCase();
 }
 
+/**
+ * Como useLayoutEffect, pero sin romper en el servidor. Corre antes de que el
+ * navegador pinte, así al volver atrás no se ve un parpadeo con el catálogo
+ * entero antes de que se apliquen los filtros.
+ */
+const useEfectoAntesDePintar = typeof window === 'undefined' ? useEffect : useLayoutEffect;
+
 export default function CatalogoCliente({ motos, categorias, marcas, filtroInicial }: Props) {
   const [busqueda, setBusqueda] = useState('');
   const [categoria, setCategoria] = useState<string>(filtroInicial?.categoria ?? '');
@@ -41,6 +55,72 @@ export default function CatalogoCliente({ motos, categorias, marcas, filtroInici
   const [tramo, setTramo] = useState<string>('');
   const [soloStock, setSoloStock] = useState(false);
   const [orden, setOrden] = useState<Orden>('relevancia');
+  const [leidaLaUrl, setLeidaLaUrl] = useState(false);
+
+  const marcaInicial = filtroInicial?.marca ?? '';
+  const categoriaInicial = filtroInicial?.categoria ?? '';
+
+  /* ---------------------------------------------------------------- */
+  /* Los filtros viven en la query string                               */
+  /*                                                                    */
+  /* Es lo que hace andar el botón "atrás": el visitante filtra, entra a */
+  /* una ficha y vuelve, y el navegador lo devuelve a la URL que tenía   */
+  /* los filtros puestos. Sin esto la página se remonta en blanco y se   */
+  /* pierde todo lo que había elegido. De paso, una búsqueda filtrada    */
+  /* se puede compartir por WhatsApp y le abre lo mismo al otro.         */
+  /*                                                                    */
+  /* Se lee con window.location y no con useSearchParams a propósito:    */
+  /* useSearchParams obliga a Next a renderizar la página en el cliente, */
+  /* y el catálogo dejaría de venir en el HTML estático, que es de donde */
+  /* lo lee Google.                                                      */
+  /* ---------------------------------------------------------------- */
+
+  // Una sola vez, al montar. Se valida todo contra las opciones que existen:
+  // una URL escrita a mano con ?cat=cualquiera no tiene que romper la página.
+  useEfectoAntesDePintar(() => {
+    const p = new URLSearchParams(window.location.search);
+    const dice = (clave: string, valido: (v: string) => boolean, poner: (v: string) => void) => {
+      const v = p.get(clave);
+      if (v !== null) poner(valido(v) ? v : '');
+    };
+
+    dice('q', () => true, setBusqueda);
+    dice('cat', (v) => categorias.some((c) => c.slug === v), setCategoria);
+    dice('marca', (v) => marcas.some((m) => m.marca === v), setMarca);
+    dice('cc', (v) => TRAMOS_CC.some((t) => t.id === v), setTramo);
+    if (p.has('stock')) setSoloStock(p.get('stock') === '1');
+
+    const o = p.get('orden');
+    if (o !== null && ORDENES.some((x) => x.id === o)) setOrden(o as Orden);
+
+    setLeidaLaUrl(true);
+    // Sólo al montar: después manda el estado, no la URL.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Cada cambio se escribe en la URL con replaceState, sin sumar una entrada
+  // al historial: si no, cada letra tipeada sería un "atrás" distinto.
+  //
+  // Los filtros que ya vienen implícitos en la ruta (/catalogo/marca/bajaj)
+  // no se repiten en la query. Cuando el visitante los cambia sí se escriben,
+  // incluso vacíos, que es como se distingue "no dijo nada" de "puso Todas".
+  useEffect(() => {
+    if (!leidaLaUrl) return;
+
+    const p = new URLSearchParams();
+    if (busqueda) p.set('q', busqueda);
+    if (categoria !== categoriaInicial) p.set('cat', categoria);
+    if (marca !== marcaInicial) p.set('marca', marca);
+    if (tramo) p.set('cc', tramo);
+    if (soloStock) p.set('stock', '1');
+    if (orden !== 'relevancia') p.set('orden', orden);
+
+    const query = p.toString();
+    const destino = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+    if (destino !== window.location.pathname + window.location.search) {
+      window.history.replaceState(null, '', destino);
+    }
+  }, [leidaLaUrl, busqueda, categoria, marca, tramo, soloStock, orden, categoriaInicial, marcaInicial]);
 
   const resultado = useMemo(() => {
     const q = normalizar(busqueda.trim());
@@ -199,10 +279,11 @@ export default function CatalogoCliente({ motos, categorias, marcas, filtroInici
               onChange={(e) => setOrden(e.target.value as Orden)}
               className="rounded-lg border border-ink-700 bg-ink-850 px-3 py-2 text-sm text-mist-50 focus:border-carri focus:outline-none"
             >
-              <option value="relevancia">Relevancia</option>
-              <option value="marca">Marca y modelo</option>
-              <option value="cc-asc">Menor cilindrada</option>
-              <option value="cc-desc">Mayor cilindrada</option>
+              {ORDENES.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>
