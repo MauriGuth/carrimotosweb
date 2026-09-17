@@ -35,12 +35,35 @@ export type MotoWeb = Moto & {
    * tienen descripciones.
    */
   descripcion: string | null;
+  /**
+   * La cinta de promo que le toca a esta moto, ya resuelta. Se calcula una vez
+   * al armar el catálogo en vez de recorrer todas las promos por cada tarjeta.
+   */
+  cinta: string | null;
+};
+
+/** Una promo publicada en Nova. La API ya filtra las que no están vigentes. */
+export type Promo = {
+  slug: string;
+  titulo: string;
+  bajada: string | null;
+  texto: string | null;
+  /** Lo que va sobre la foto en el catálogo. null = esta promo no pone cinta. */
+  cinta: string | null;
+  /** El número, tal cual lo escribió el cliente: "12 cuotas sin interés". */
+  destacado: string | null;
+  imagen: string | null;
+  miniatura: string | null;
+  hasta: string | null;
+  /** Slugs de las motos que entran. Vacío = campaña general, para toda la web. */
+  modelos: string[];
 };
 
 export type Catalogo = {
   motos: MotoWeb[];
   fotos: Record<string, Foto[]>;
   fichas: Record<string, FichaTecnica>;
+  promos: Promo[];
   /** De dónde salieron los datos. Se loguea en el build para no adivinar. */
   origen: 'nova' | 'repo';
 };
@@ -61,6 +84,8 @@ type ModeloDeNova = {
   colores: string[];
   ficha: { etiqueta: string; valor: string }[];
   fotos: { grande: string; mini: string }[];
+  /** Slugs de las promos vigentes que incluyen esta moto. */
+  promos?: string[];
 };
 
 /** Las etiquetas que manda Nova, de vuelta a las claves que usa la ficha. */
@@ -82,7 +107,18 @@ function modeloDe(nombre: string, marca: string): string {
     : limpio;
 }
 
-function desdeNova(modelos: ModeloDeNova[]): Catalogo {
+function desdeNova(modelos: ModeloDeNova[], promos: Promo[]): Catalogo {
+  // La cinta de cada moto: la primera promo que la incluya y traiga cinta.
+  // Si una moto cae en dos promos con cinta gana la de arriba en Nova, que es
+  // el orden en el que vienen.
+  const cintaPorModelo = new Map<string, string>();
+  for (const promo of promos) {
+    if (!promo.cinta) continue;
+    for (const slug of promo.modelos) {
+      if (!cintaPorModelo.has(slug)) cintaPorModelo.set(slug, promo.cinta);
+    }
+  }
+
   const motos: MotoWeb[] = [];
   const fotos: Record<string, Foto[]> = {};
   const fichas: Record<string, FichaTecnica> = {};
@@ -104,6 +140,7 @@ function desdeNova(modelos: ModeloDeNova[]): Catalogo {
       altaGama: m.premium,
       miniatura: m.fotos[0]?.mini ?? null,
       descripcion: m.descripcion?.trim() || null,
+      cinta: cintaPorModelo.get(m.slug) ?? null,
     });
 
     if (m.fotos.length) {
@@ -118,7 +155,7 @@ function desdeNova(modelos: ModeloDeNova[]): Catalogo {
     if (Object.keys(ficha).length) fichas[m.slug] = ficha as FichaTecnica;
   }
 
-  return { motos, fotos, fichas, origen: 'nova' };
+  return { motos, fotos, fichas, promos, origen: 'nova' };
 }
 
 /** El catálogo de los archivos del repo, que es como venía funcionando. */
@@ -128,9 +165,12 @@ function desdeElRepo(): Catalogo {
       ...m,
       miniatura: FOTOS[m.slug]?.[0]?.mini ?? null,
       descripcion: null,
+      cinta: null,
     })),
     fotos: FOTOS,
     fichas: FICHAS,
+    // Las promos viven solo en Nova: sin Nova no hay promos que mostrar.
+    promos: [],
     origen: 'repo',
   };
 }
@@ -169,11 +209,13 @@ async function cargar(): Promise<Catalogo> {
     });
     if (!res.ok) throw new Error(`la API respondió ${res.status}`);
 
-    const datos = (await res.json()) as { modelos?: ModeloDeNova[] };
+    const datos = (await res.json()) as { modelos?: ModeloDeNova[]; promos?: Promo[] };
     if (!Array.isArray(datos.modelos) || datos.modelos.length === 0) {
       throw new Error('el catálogo vino vacío');
     }
-    return desdeNova(datos.modelos);
+    // Las promos son opcionales a propósito: una API todavía sin el módulo
+    // devuelve el catálogo igual y el sitio anda, sin promos.
+    return desdeNova(datos.modelos, Array.isArray(datos.promos) ? datos.promos : []);
   } catch (e) {
     // Con la API caída el sitio sigue en pie con lo último que quedó en el
     // repo, en vez de publicar un catálogo vacío o romper el build.
@@ -277,6 +319,38 @@ export async function motosDestacadas(cantidad = 8): Promise<MotoWeb[]> {
   const enStock = motos.filter((m) => m.enStock);
   const resto = motos.filter((m) => !m.enStock && m.cilindrada !== null);
   return [...enStock, ...resto].slice(0, cantidad);
+}
+
+/* ---------------------------------------------------------------- */
+/* Promos                                                            */
+/* ---------------------------------------------------------------- */
+
+/**
+ * Las promos que se están viendo. La vigencia la resuelve Nova: si una promo
+ * venció o está apagada, directamente no viene.
+ */
+export async function promosVigentes(): Promise<Promo[]> {
+  const { promos } = await obtenerCatalogo();
+  return promos;
+}
+
+/** Las promos que incluyen a esta moto. */
+export async function promosDe(slug: string): Promise<Promo[]> {
+  const { promos } = await obtenerCatalogo();
+  return promos.filter((p) => p.modelos.includes(slug));
+}
+
+/** Una promo por su dirección. undefined si no existe o ya no está vigente. */
+export async function promoPorSlug(slug: string): Promise<Promo | undefined> {
+  const { promos } = await obtenerCatalogo();
+  return promos.find((p) => p.slug === slug);
+}
+
+/** Las motos que entran en una promo, en el orden del catálogo. */
+export async function motosDeLaPromo(promo: Promo): Promise<MotoWeb[]> {
+  const { motos } = await obtenerCatalogo();
+  const enLaPromo = new Set(promo.modelos);
+  return motos.filter((m) => enLaPromo.has(m.slug));
 }
 
 /* ---------------------------------------------------------------- */

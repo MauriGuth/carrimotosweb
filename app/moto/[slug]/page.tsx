@@ -6,10 +6,12 @@ import MotoCard from '@/components/MotoCard';
 import BotonesSucursales from '@/components/BotonesSucursales';
 import Revelar from '@/components/Revelar';
 import RevelarGrilla from '@/components/RevelarGrilla';
+import PromosDeLaMoto from '@/components/PromosDeLaMoto';
 import { CATEGORIAS } from '@/data/motos';
 import { NEGOCIO } from '@/data/sucursales';
 import {
   fichaDe,
+  promosDe,
   fotosDe,
   motoPorSlug,
   motosRelacionadas,
@@ -61,10 +63,11 @@ export default async function MotoPage({ params }: Props) {
   if (!moto) notFound();
 
   const categoria = CATEGORIAS[moto.categoria];
-  const [relacionadas, fotos, ficha] = await Promise.all([
+  const [relacionadas, fotos, ficha, promos] = await Promise.all([
     motosRelacionadas(moto),
     fotosDe(moto.slug),
     fichaDe(moto.slug),
+    promosDe(moto.slug),
   ]);
 
   const resumen: { etiqueta: string; valor: string }[] = [
@@ -153,6 +156,8 @@ export default async function MotoPage({ params }: Props) {
               {moto.descripcion}
             </p>
           )}
+
+          <PromosDeLaMoto promos={promos} />
 
           <div className="mt-7 rounded-xl border border-ink-700 bg-ink-900 p-5">
             <p className="titulo text-xs tracking-widest text-mist-500">Precio</p>

@@ -19,6 +19,14 @@ export default function MotoCard({ moto, prioridad = false }: { moto: MotoWeb; p
           className="h-full w-full transition-transform duration-300 group-hover:scale-105"
         />
 
+        {/* La cinta de promo va sola arriba a la derecha, separada de los otros
+            distintivos: es lo que tiene que saltar a la vista en la grilla. */}
+        {moto.cinta && (
+          <span className="titulo absolute right-0 top-3 rounded-l bg-amber-400 px-2.5 py-1 text-[10px] tracking-widest text-ink-950 shadow-lg">
+            {moto.cinta}
+          </span>
+        )}
+
         <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
           {moto.enStock && (
             <span className="titulo rounded bg-carri px-2 py-1 text-[10px] tracking-widest text-white">

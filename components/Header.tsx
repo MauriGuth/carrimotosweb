@@ -13,6 +13,7 @@ type Props = {
 
 const LINKS = [
   { href: '/catalogo', label: 'Catálogo' },
+  { href: '/promos', label: 'Promos' },
   { href: '/accesorios', label: 'Accesorios' },
   { href: '/sucursales', label: 'Sucursales' },
 ];

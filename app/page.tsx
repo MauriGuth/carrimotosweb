@@ -2,12 +2,14 @@ import Link from 'next/link';
 import MotoCard from '@/components/MotoCard';
 import BotonesSucursales from '@/components/BotonesSucursales';
 import MarquesinaMarcas from '@/components/MarquesinaMarcas';
+import TiraPromos from '@/components/TiraPromos';
 import Revelar from '@/components/Revelar';
 import RevelarGrilla from '@/components/RevelarGrilla';
 import Contador from '@/components/Contador';
 import { ACCESORIOS } from '@/data/accesorios';
 import {
   categoriasConConteo,
+  promosVigentes,
   marcasConConteo,
   motosDestacadas,
   todasLasMotos,
@@ -25,9 +27,10 @@ import {
 export const revalidate = 60;
 
 export default async function Home() {
-  const [motos, categorias, marcas, destacadas] = await Promise.all([
+  const [motos, categorias, promos, marcas, destacadas] = await Promise.all([
     todasLasMotos(),
     categoriasConConteo(),
+    promosVigentes(),
     marcasConConteo(),
     motosDestacadas(8),
   ]);
@@ -106,6 +109,8 @@ export default async function Home() {
       {/* ---------------------------------------------------------------- */}
       {/* Categorías                                                       */}
       {/* ---------------------------------------------------------------- */}
+      <TiraPromos promos={promos} />
+
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
         <Encabezado titulo="Buscá por categoría" bajada="Elegí el tipo de moto que estás buscando." />
 

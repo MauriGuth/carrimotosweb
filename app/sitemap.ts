@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { NEGOCIO, SITIO_INDEXABLE } from '@/data/sucursales';
-import { categoriasConConteo, marcasConConteo, todasLasMotos } from '@/lib/catalogo';
+import { categoriasConConteo, marcasConConteo, promosVigentes, todasLasMotos } from '@/lib/catalogo';
 
 /**
  * El catálogo sale de Nova y el cliente lo edita desde el panel, así que esta
@@ -19,13 +19,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (!SITIO_INDEXABLE) return [];
 
   const ahora = new Date();
-  const [motos, marcas, categorias] = await Promise.all([
+  const [motos, marcas, categorias, promos] = await Promise.all([
     todasLasMotos(),
     marcasConConteo(),
     categoriasConConteo(),
+    promosVigentes(),
   ]);
 
-  const fijas = ['', '/catalogo', '/accesorios', '/sucursales'].map((ruta) => ({
+  const fijas = ['', '/catalogo', '/promos', '/accesorios', '/sucursales'].map((ruta) => ({
     url: `${NEGOCIO.sitio}${ruta}`,
     lastModified: ahora,
     changeFrequency: 'weekly' as const,
@@ -55,5 +56,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...fijas, ...porMarca, ...porCategoria, ...fichas];
+  // Las promos cambian seguido y vencen: se listan a diario para que Google
+  // no siga mostrando una que ya no está.
+  const dePromos = promos.map((p) => ({
+    url: `${NEGOCIO.sitio}/promos/${p.slug}`,
+    lastModified: ahora,
+    changeFrequency: 'daily' as const,
+    priority: 0.7,
+  }));
+
+  return [...fijas, ...dePromos, ...porMarca, ...porCategoria, ...fichas];
 }
