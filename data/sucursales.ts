@@ -8,8 +8,8 @@
  *  número, sus botones de contacto vuelven a usar Instagram en vez de quedar
  *  rotos — y el sitio vuelve a publicarse con noindex (ver SITIO_INDEXABLE).
  *
- *  ⚠️ FALTAN las direcciones y los horarios. Los campos vacíos simplemente no
- *     se muestran: no hay datos de relleno dando vueltas en la web.
+ *  ⚠️ FALTAN los horarios de atención. Los campos vacíos simplemente no se
+ *     muestran: no hay datos de relleno dando vueltas en la web.
  *
  *  El teléfono va en formato internacional, sin "+" ni espacios ni guiones:
  *     +54 9 299 412-3456   →   "5492994123456"
@@ -45,6 +45,9 @@ export const SUCURSALES: Sucursal[] = [
     instagram: 'carrimotos.centenario',
     whatsapp: '5492995338783',
     telefonoVisible: '+54 9 2995 33-8783',
+    direccion: 'San Martín 279',
+    mapsUrl:
+      'https://www.google.com/maps/search/?api=1&query=San%20Mart%C3%ADn%20279%2C%20Centenario%2C%20Neuqu%C3%A9n%2C%20Argentina',
     ciudad: 'Centenario, Neuquén',
   },
   {
@@ -53,6 +56,9 @@ export const SUCURSALES: Sucursal[] = [
     instagram: 'carrimotos.plottier',
     whatsapp: '5492993295118',
     telefonoVisible: '+54 9 2993 29-5118',
+    direccion: 'Av. San Martín 853',
+    mapsUrl:
+      'https://www.google.com/maps/search/?api=1&query=Av.%20San%20Mart%C3%ADn%20853%2C%20Plottier%2C%20Neuqu%C3%A9n%2C%20Argentina',
     ciudad: 'Plottier, Neuquén',
   },
   {
@@ -61,6 +67,9 @@ export const SUCURSALES: Sucursal[] = [
     instagram: 'carrimotos.patagonia',
     whatsapp: '5492972415844',
     telefonoVisible: '+54 9 2972 41-5844',
+    direccion: 'Av. San Martín 1378',
+    mapsUrl:
+      'https://www.google.com/maps/search/?api=1&query=Av.%20San%20Mart%C3%ADn%201378%2C%20San%20Mart%C3%ADn%20de%20los%20Andes%2C%20Neuqu%C3%A9n%2C%20Argentina',
     ciudad: 'San Martín de los Andes, Neuquén',
   },
 ];
