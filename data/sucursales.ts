@@ -4,13 +4,12 @@
  *  Este es el único archivo que hay que tocar para cambiar los datos de
  *  contacto: nombres, WhatsApp, Instagram, direcciones y horarios.
  *
- *  ⚠️ FALTA CARGAR: los tres números de WhatsApp, las direcciones y los
- *     horarios. Mientras `whatsapp` esté vacío, los botones de contacto de
- *     esa sucursal usan su Instagram, que sí funciona. Apenas cargues el
- *     número, WhatsApp pasa a tener prioridad automáticamente.
+ *  Los tres WhatsApp están cargados. Si a alguna sucursal se le vacía el
+ *  número, sus botones de contacto vuelven a usar Instagram en vez de quedar
+ *  rotos — y el sitio vuelve a publicarse con noindex (ver SITIO_INDEXABLE).
  *
- *     Los campos de dirección y horarios vacíos simplemente no se muestran:
- *     no hay datos de relleno dando vueltas en la web.
+ *  ⚠️ FALTAN las direcciones y los horarios. Los campos vacíos simplemente no
+ *     se muestran: no hay datos de relleno dando vueltas en la web.
  *
  *  El teléfono va en formato internacional, sin "+" ni espacios ni guiones:
  *     +54 9 299 412-3456   →   "5492994123456"
@@ -41,21 +40,28 @@ export type Sucursal = {
 
 export const SUCURSALES: Sucursal[] = [
   {
-    slug: 'casa-central',
-    nombre: 'Casa Central',
-    instagram: 'carrimotos.patagonia',
-  },
-  {
     slug: 'centenario',
     nombre: 'Centenario',
     instagram: 'carrimotos.centenario',
-    ciudad: 'Centenario',
+    whatsapp: '5492995338783',
+    telefonoVisible: '+54 9 2995 33-8783',
+    ciudad: 'Centenario, Neuquén',
   },
   {
     slug: 'plottier',
     nombre: 'Plottier',
     instagram: 'carrimotos.plottier',
-    ciudad: 'Plottier',
+    whatsapp: '5492993295118',
+    telefonoVisible: '+54 9 2993 29-5118',
+    ciudad: 'Plottier, Neuquén',
+  },
+  {
+    slug: 'san-martin-de-los-andes',
+    nombre: 'San Martín de los Andes',
+    instagram: 'carrimotos.patagonia',
+    whatsapp: '5492972415844',
+    telefonoVisible: '+54 9 2972 41-5844',
+    ciudad: 'San Martín de los Andes, Neuquén',
   },
 ];
 
@@ -87,8 +93,8 @@ export const SITIO_INDEXABLE: boolean = SUCURSALES.every((s) => Boolean(s.whatsa
 export const NEGOCIO = {
   nombre: 'CARRI Motos',
   descripcionCorta: 'Concesionario de motos 0km. Todas las marcas, financiación y service.',
-  /** Cuenta principal, la de Casa Central. */
-  instagram: 'https://www.instagram.com/carrimotos.patagonia/',
+  /** Cuenta principal del negocio. */
+  instagram: 'https://www.instagram.com/carrimotos.centenario/',
   email: '',
   /** Dominio donde se publica el sitio, para los metadatos y el sitemap. */
   sitio: 'https://carrimotos.com.ar',
