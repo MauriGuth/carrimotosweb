@@ -50,6 +50,9 @@ const ANCHO_MINI = 400;
 const ALTO_MINI = 300;
 const CALIDAD_MINI = 72;
 const UMBRAL_MATCH = 0.55;
+// Cuánto le tiene que sacar el mejor candidato al segundo para no considerarse
+// dudoso.
+const MARGEN = 0.12;
 
 const ES_IMAGEN = /\.(jpe?g|png|webp|avif|tiff?|heic)$/i;
 const SLUGS = new Set(MOTOS.map((m) => m.slug));
@@ -70,33 +73,48 @@ function palabras(texto) {
     .filter(Boolean);
 }
 
+/**
+ * Qué tan bien le va a un modelo contra el nombre que se está mirando, en dos
+ * números:
+ *
+ *   cubre   — cuánto del modelo aparece en el nombre.
+ *   explica — cuánto del nombre lo justifica el modelo.
+ *
+ * Los dos hacen falta. Con `cubre` sola, la carpeta "BENELLI - TRK 502 X"
+ * empata entre TRK 502 y TRK 502 X, porque las tres palabras de la primera
+ * están todas ahí. Lo que las separa es que la X queda sin explicar, y eso es
+ * justo lo que mide el segundo número. Pasa con cualquier modelo que sea la
+ * versión de otro, que en el catálogo hay de sobra.
+ */
 function puntaje(palabrasArchivo, moto) {
-  const delModelo = palabras(`${moto.marca} ${moto.modelo}`);
   const marca = palabras(moto.marca);
-  if (!marca.every((p) => palabrasArchivo.includes(p))) return 0;
-  return delModelo.filter((p) => palabrasArchivo.includes(p)).length / delModelo.length;
+  if (!marca.every((p) => palabrasArchivo.includes(p))) return { cubre: 0, explica: 0 };
+
+  const delModelo = palabras(`${moto.marca} ${moto.modelo}`);
+  const comunes = delModelo.filter((p) => palabrasArchivo.includes(p)).length;
+  return {
+    cubre: comunes / delModelo.length,
+    explica: comunes / palabrasArchivo.length,
+  };
 }
 
 function emparejar(nombreArchivo) {
   const pa = palabras(nombreArchivo);
-  let mejor = null;
-  let primero = 0;
-  let segundo = 0;
+  if (!pa.length) return { estado: 'sin-match' };
 
-  for (const moto of MOTOS) {
-    const p = puntaje(pa, moto);
-    if (p > primero) {
-      segundo = primero;
-      primero = p;
-      mejor = moto;
-    } else if (p > segundo) {
-      segundo = p;
-    }
+  const candidatos = MOTOS.map((moto) => ({ moto, ...puntaje(pa, moto) }))
+    .filter((c) => c.cubre >= UMBRAL_MATCH)
+    .sort((a, b) => b.cubre - a.cubre || b.explica - a.explica);
+
+  const [primero, segundo] = candidatos;
+  if (!primero) return { estado: 'sin-match' };
+
+  // Dudoso sólo si el segundo empata en las dos cosas: si cubre lo mismo pero
+  // explica menos, el primero es mejor y no hay nada que dudar.
+  if (segundo && primero.cubre - segundo.cubre < MARGEN && primero.explica - segundo.explica < MARGEN) {
+    return { estado: 'ambiguo', moto: primero.moto };
   }
-
-  if (!mejor || primero < UMBRAL_MATCH) return { estado: 'sin-match' };
-  if (primero - segundo < 0.12) return { estado: 'ambiguo', moto: mejor };
-  return { estado: 'ok', moto: mejor };
+  return { estado: 'ok', moto: primero.moto };
 }
 
 /* ---------------------------------------------------------------- */
@@ -365,4 +383,39 @@ async function main() {
   console.log(`\nCobertura: ${conFoto.size} de ${total} modelos con foto.`);
 }
 
-main();
+/**
+ * Chequeo del emparejador. Para cada modelo del catálogo simula la carpeta
+ * "MARCA - MODELO" —que es como vienen los zips de los importadores— y
+ * verifica que caiga en ese modelo y no en otro.
+ *
+ * Los que se rompen fácil son los modelos que son la versión de otro: TRK 502
+ * y TRK 502 X, SKUA 250 y SKUA 250 ADVENTURE, y así. Conviene correrlo cuando
+ * se toca el emparejador o cuando entran modelos nuevos al catálogo:
+ *
+ *   npm run fotos:probar
+ */
+function probar() {
+  const fallan = [];
+
+  for (const moto of MOTOS) {
+    const carpeta = `${moto.marca} - ${moto.modelo}`;
+    const r = emparejar(carpeta);
+    if (r.estado === 'ok' && r.moto.slug === moto.slug) continue;
+
+    const cayo =
+      r.estado === 'sin-match' ? 'no coincide con ninguno' : `${r.moto.nombre}${r.estado === 'ambiguo' ? ' (dudoso)' : ''}`;
+    fallan.push(`${carpeta}  →  ${cayo}`);
+  }
+
+  if (fallan.length) {
+    console.log(`Emparejador: ${fallan.length} de ${MOTOS.length} modelos no caen donde deberían\n`);
+    for (const f of fallan) console.log(`  ${f}`);
+    process.exitCode = 1;
+    return;
+  }
+
+  console.log(`Emparejador: los ${MOTOS.length} modelos caen en su propia carpeta "MARCA - MODELO".`);
+}
+
+if (process.argv.includes('--probar')) probar();
+else main();

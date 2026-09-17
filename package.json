@@ -11,6 +11,7 @@
     "import:catalogo": "node --experimental-strip-types --no-warnings scripts/import-catalogo.mjs",
     "fotos": "node --experimental-strip-types --no-warnings scripts/preparar-fotos.mjs && node scripts/generar-manifiesto-fotos.mjs",
     "fotos:faltan": "node --experimental-strip-types --no-warnings scripts/pedido-fotos.mjs",
+    "fotos:probar": "node --experimental-strip-types --no-warnings scripts/preparar-fotos.mjs --probar",
     "fotos:manifiesto": "node scripts/generar-manifiesto-fotos.mjs",
     "ficha:plantilla": "node --experimental-strip-types --no-warnings scripts/plantilla-ficha.mjs"
   },

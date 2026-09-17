@@ -34,4 +34,23 @@ export const ORDEN_FOTOS: Record<string, number[]> = {
 
   // Estudio, las de calle, y al final tanque, motor y llanta.
   'bajaj-rouserns-125': [1, 5, 7, 6, 8, 2, 3, 4],
+
+  // Los tres colores de perfil y de frente, la moto parada en la ruta, las de
+  // andando —la 14 casi al final porque la moto se ve chiquita— y al final el
+  // frente, el manillar, el tablero, el motor, la llanta y el escape.
+  'benelli-trk-702': [
+    1, 2, 3, 4, 5, 6,
+    7, 11, 13,
+    8, 10, 15, 12, 16, 22, 23, 25, 24, 14,
+    9, 17, 19, 18, 20, 21,
+  ],
+
+  // El zip deja tres fotos de la moto entera al final (23, 24 y la 10), detrás
+  // de los detalles: se suben con las de estudio.
+  'benelli-trk-702-x': [
+    1, 2, 3, 4, 5, 6, 7, 8,
+    10, 23, 24, 14, 15,
+    11, 12, 16, 17, 18, 19, 25, 13,
+    9, 20, 21, 22,
+  ],
 };
