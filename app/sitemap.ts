@@ -1,9 +1,13 @@
 import type { MetadataRoute } from 'next';
 import { MOTOS } from '@/data/motos';
-import { NEGOCIO } from '@/data/sucursales';
+import { NEGOCIO, SITIO_INDEXABLE } from '@/data/sucursales';
 import { categoriasConConteo, marcasConConteo, slugMarca } from '@/lib/catalogo';
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  // Mientras el sitio esté en noindex no se listan páginas: sería pedirle a
+  // Google que rastree justo lo que le estamos diciendo que no indexe.
+  if (!SITIO_INDEXABLE) return [];
+
   const ahora = new Date();
 
   const fijas = ['', '/catalogo', '/accesorios', '/sucursales'].map((ruta) => ({

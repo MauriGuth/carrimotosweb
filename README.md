@@ -28,6 +28,23 @@ cada moto, los de la página de sucursales y el botón flotante de WhatsApp. El
 mensaje sale escrito solo, con el nombre del vendedor y el modelo que el cliente
 estaba mirando.
 
+### 1b. Mientras falten los WhatsApp, el sitio no se indexa
+
+El sitio se publica con `noindex` hasta que las tres sucursales tengan su
+número cargado. Se puede ver y compartir el link, pero no aparece en Google: no
+tiene sentido indexar un catálogo cuyo botón de contacto todavía no lleva al
+teléfono real.
+
+**Se reactiva solo.** `SITIO_INDEXABLE` en `data/sucursales.ts` se calcula a
+partir de los datos, así que en cuanto estén los tres números el siguiente
+deploy sale indexable. No hay ningún interruptor que acordarse de prender, y el
+build de Vercel avisa en el log mientras el `noindex` siga activo.
+
+Un detalle: el `robots.txt` **permite** el rastreo incluso con el `noindex`
+puesto. Es a propósito. Si se bloqueara con un `Disallow`, el robot no podría
+leer la etiqueta `noindex` y Google podría indexar la URL igual, sin
+descripción. Lo que sí se saca mientras tanto es el sitemap.
+
 ### 2. El logo — `components/Logo.tsx`
 
 El logo está redibujado en SVG para que se vea bien sobre fondo oscuro y en

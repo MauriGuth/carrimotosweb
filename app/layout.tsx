@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WhatsAppFlotante from '@/components/WhatsAppFlotante';
 import { categoriasConConteo, marcasConConteo } from '@/lib/catalogo';
-import { NEGOCIO } from '@/data/sucursales';
+import { NEGOCIO, SITIO_INDEXABLE } from '@/data/sucursales';
 
 const display = Chakra_Petch({
   subsets: ['latin'],
@@ -34,7 +34,12 @@ export const metadata: Metadata = {
     title: 'CARRI Motos — Concesionario de motos 0km',
     description: NEGOCIO.descripcionCorta,
   },
-  robots: { index: true, follow: true },
+  // Mientras falten los WhatsApp el sitio se publica con noindex. Se deja
+  // entrar al robot igual (robots.txt no bloquea) porque si no pudiera leer
+  // esta etiqueta, Google podría indexar la URL de todos modos.
+  robots: SITIO_INDEXABLE
+    ? { index: true, follow: true }
+    : { index: false, follow: false, nocache: true },
 };
 
 export const viewport: Viewport = {

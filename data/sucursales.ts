@@ -69,6 +69,20 @@ export function linkInstagram(sucursal: Sucursal): string {
   return `https://www.instagram.com/${sucursal.instagram}/`;
 }
 
+/**
+ * ¿El sitio se puede indexar en Google?
+ *
+ * Mientras alguna sucursal no tenga su WhatsApp cargado, el sitio se publica
+ * con `noindex`: sirve para mostrarlo y compartir el link, pero no aparece en
+ * las búsquedas. No tiene sentido que Google indexe un catálogo cuyo botón de
+ * contacto todavía no lleva al teléfono real.
+ *
+ * Se calcula solo: en cuanto los tres números estén en SUCURSALES, el sitio
+ * pasa a ser indexable en el siguiente deploy. No hay ningún interruptor que
+ * acordarse de volver a prender.
+ */
+export const SITIO_INDEXABLE: boolean = SUCURSALES.every((s) => Boolean(s.whatsapp));
+
 /** Datos generales del negocio, usados en el pie y en los metadatos. */
 export const NEGOCIO = {
   nombre: 'CARRI Motos',
