@@ -34,6 +34,7 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { MOTOS } from '../data/motos.ts';
 import { ORDEN_FOTOS } from '../data/orden-fotos.ts';
+import { DESCARTADAS } from '../data/fotos-descartadas.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -262,6 +263,34 @@ function porNumero(a, b) {
 }
 
 /**
+ * Saca las fotos listadas en data/fotos-descartadas.ts, por su posición en el
+ * zip. Se hace antes de ordenar, así el orden se cuenta sobre las que quedan.
+ */
+function descartar(grupos) {
+  const avisos = [];
+
+  for (const [slug, rutas] of grupos) {
+    const descarte = DESCARTADAS[slug];
+    if (!descarte) continue;
+
+    const fuera = new Set(descarte.fuera);
+    const quedan = rutas.filter((_, i) => !fuera.has(i + 1));
+    const sacadas = rutas.length - quedan.length;
+
+    if (!quedan.length) {
+      avisos.push(`${slug}: el descarte se lleva las ${rutas.length} fotos; queda sin galería`);
+      grupos.delete(slug);
+      continue;
+    }
+
+    grupos.set(slug, quedan);
+    avisos.push(`${slug}: ${sacadas} de ${rutas.length} fotos fuera — ${descarte.motivo}`);
+  }
+
+  return avisos;
+}
+
+/**
  * Aplica el orden de galería de data/orden-fotos.ts. Si la lista no es una
  * permutación exacta de las fotos que llegaron —porque el zip cambió— avisa y
  * deja el orden original, en vez de recortar o repetir fotos en silencio.
@@ -365,6 +394,7 @@ async function main() {
 
   const { grupos, revisar } = planificar();
   const estiradas = [];
+  for (const aviso of descartar(grupos)) console.log(`  · ${aviso}`);
   for (const aviso of reordenar(grupos)) console.warn(`  ! ${aviso}`);
 
   if (!grupos.size && !revisar.length) {
