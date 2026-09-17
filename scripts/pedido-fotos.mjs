@@ -4,31 +4,17 @@
  *
  *   node scripts/pedido-fotos.mjs            → resumen + estado de cobertura
  *   node scripts/pedido-fotos.mjs --texto    → un bloque de texto por marca
- *   node scripts/pedido-fotos.mjs --csv      → planilla marca,modelo,archivo
+ *   node scripts/pedido-fotos.mjs --csv      → planilla marca,modelo,slug
  */
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { MOTOS } from '../data/motos.ts';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.join(__dirname, '..');
-const DIR_FOTOS = path.join(ROOT, 'public', 'motos');
+import { FOTOS } from '../data/fotos.ts';
 
 const modo = process.argv.includes('--texto') ? 'texto' : process.argv.includes('--csv') ? 'csv' : 'resumen';
 
-/** Slugs que ya tienen foto cargada. */
-function fotosPresentes() {
-  if (!fs.existsSync(DIR_FOTOS)) return new Set();
-  return new Set(
-    fs
-      .readdirSync(DIR_FOTOS)
-      .filter((f) => /\.(jpe?g|png|webp|avif)$/i.test(f))
-      .map((f) => f.replace(/\.[^.]+$/, '')),
-  );
-}
-
-const presentes = fotosPresentes();
+// La cobertura sale del manifiesto, que es lo que realmente lee la web. Antes
+// se listaba public/motos/ buscando <slug>.jpg sueltos, así que los modelos
+// con galería propia —una carpeta con varias fotos— figuraban como faltantes.
+const presentes = new Set(Object.keys(FOTOS));
 const faltan = MOTOS.filter((m) => !presentes.has(m.slug));
 
 const porMarca = new Map();
@@ -39,9 +25,9 @@ for (const m of faltan) {
 const marcas = [...porMarca.entries()].sort((a, b) => b[1].length - a[1].length);
 
 if (modo === 'csv') {
-  console.log('marca,modelo,archivo_que_espera_la_web');
+  console.log('marca,modelo,slug');
   for (const [marca, motos] of marcas) {
-    for (const m of motos) console.log(`"${marca}","${m.modelo}","${m.slug}.jpg"`);
+    for (const m of motos) console.log(`"${marca}","${m.modelo}","${m.slug}"`);
   }
 } else if (modo === 'texto') {
   for (const [marca, motos] of marcas) {
