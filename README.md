@@ -230,3 +230,22 @@ scripts/
   import-catalogo.mjs   el importador (lee scripts/catalogo.xlsx, no versionado)
 public/motos/           las fotos de los modelos
 ```
+
+## De dónde sale el catálogo
+
+Los modelos, las fotos y las fichas pueden venir de dos lados, y el sitio elige
+según estén o no cargadas `NOVA_API_URL` y `NOVA_CATALOG_TOKEN` (ver
+`.env.example`):
+
+- **De Nova**, cuando están. El cliente maneja su catálogo desde el panel
+  (Web → Catálogo) y el sitio muestra lo que haya al armar la página. Se
+  revisa cada 60 segundos, así que un cambio en Nova se ve enseguida.
+  La disponibilidad sale de las unidades en stock, no de un campo cargado a
+  mano.
+
+- **Del repo**, cuando no están: los archivos de `data/` que genera
+  `npm run import:catalogo` y `npm run fotos`. Es como venía funcionando.
+
+El respaldo no es por las dudas: es lo que hace que el sitio no dependa de que
+Nova esté arriba. Si la API no contesta, el build usa lo último que quedó en el
+repo en vez de publicar un catálogo vacío, y avisa en el log.

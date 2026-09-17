@@ -5,14 +5,21 @@ import MarquesinaMarcas from '@/components/MarquesinaMarcas';
 import Revelar from '@/components/Revelar';
 import RevelarGrilla from '@/components/RevelarGrilla';
 import Contador from '@/components/Contador';
-import { MOTOS } from '@/data/motos';
 import { ACCESORIOS } from '@/data/accesorios';
-import { categoriasConConteo, marcasConConteo, motosDestacadas } from '@/lib/catalogo';
+import {
+  categoriasConConteo,
+  marcasConConteo,
+  motosDestacadas,
+  todasLasMotos,
+} from '@/lib/catalogo';
 
-export default function Home() {
-  const categorias = categoriasConConteo();
-  const marcas = marcasConConteo();
-  const destacadas = motosDestacadas(8);
+export default async function Home() {
+  const [motos, categorias, marcas, destacadas] = await Promise.all([
+    todasLasMotos(),
+    categoriasConConteo(),
+    marcasConConteo(),
+    motosDestacadas(8),
+  ]);
   const totalAccesorios = ACCESORIOS.reduce((n, g) => n + g.items.length, 0);
 
   return (
@@ -47,7 +54,7 @@ export default function Home() {
             </h1>
 
             <p className="mt-6 max-w-xl text-base text-mist-300 sm:text-lg">
-              {MOTOS.length} modelos de {marcas.length} marcas, en nuestras tres sucursales. Mirá el catálogo,
+              {motos.length} modelos de {marcas.length} marcas, en nuestras tres sucursales. Mirá el catálogo,
               elegí tu moto y escribinos.
             </p>
 
@@ -68,7 +75,7 @@ export default function Home() {
 
             <dl className="mt-14 grid max-w-2xl grid-cols-3 gap-4 border-t border-ink-700 pt-8">
               {[
-                { valor: MOTOS.length, label: 'Modelos' },
+                { valor: motos.length, label: 'Modelos' },
                 { valor: marcas.length, label: 'Marcas' },
                 { valor: 3, label: 'Sucursales' },
               ].map((d) => (

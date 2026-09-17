@@ -6,23 +6,29 @@ import MotoCard from '@/components/MotoCard';
 import BotonesSucursales from '@/components/BotonesSucursales';
 import Revelar from '@/components/Revelar';
 import RevelarGrilla from '@/components/RevelarGrilla';
-import { CATEGORIAS, MOTOS } from '@/data/motos';
+import { CATEGORIAS } from '@/data/motos';
 import { NEGOCIO } from '@/data/sucursales';
-import { motoPorSlug, motosRelacionadas, resumenMoto, slugMarca } from '@/lib/catalogo';
-import { fotosDe } from '@/data/fotos';
-import { fichaDe } from '@/data/fichas';
+import {
+  fichaDe,
+  fotosDe,
+  motoPorSlug,
+  motosRelacionadas,
+  resumenMoto,
+  slugMarca,
+  todasLasMotos,
+} from '@/lib/catalogo';
 import FichaTecnica from '@/components/FichaTecnica';
 import { capitalizar } from '@/lib/formato';
 
 type Props = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return MOTOS.map((m) => ({ slug: m.slug }));
+export async function generateStaticParams() {
+  return (await todasLasMotos()).map((m) => ({ slug: m.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const moto = motoPorSlug(slug);
+  const moto = await motoPorSlug(slug);
   if (!moto) return { title: 'Modelo no encontrado' };
 
   const descripcion = `${moto.nombre} en CARRI Motos. ${resumenMoto(moto)}. Consultá precio y disponibilidad por WhatsApp.`;
@@ -40,13 +46,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function MotoPage({ params }: Props) {
   const { slug } = await params;
-  const moto = motoPorSlug(slug);
+  const moto = await motoPorSlug(slug);
   if (!moto) notFound();
 
   const categoria = CATEGORIAS[moto.categoria];
-  const relacionadas = motosRelacionadas(moto);
-  const fotos = fotosDe(moto.slug);
-  const ficha = fichaDe(moto.slug);
+  const [relacionadas, fotos, ficha] = await Promise.all([
+    motosRelacionadas(moto),
+    fotosDe(moto.slug),
+    fichaDe(moto.slug),
+  ]);
 
   const resumen: { etiqueta: string; valor: string }[] = [
     { etiqueta: 'Marca', valor: moto.marca },

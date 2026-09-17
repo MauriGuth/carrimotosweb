@@ -46,9 +46,8 @@ export const viewport: Viewport = {
   themeColor: '#08080a',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const categorias = categoriasConConteo();
-  const marcas = marcasConConteo();
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const [categorias, marcas] = await Promise.all([categoriasConConteo(), marcasConConteo()]);
 
   return (
     <html lang="es-AR" className={`${display.variable} ${sans.variable}`}>

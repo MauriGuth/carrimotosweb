@@ -1,9 +1,10 @@
 import Link from 'next/link';
 import MotoImagen from './MotoImagen';
-import { CATEGORIAS, type Moto } from '@/data/motos';
+import { CATEGORIAS } from '@/data/motos';
+import type { MotoWeb } from '@/lib/catalogo';
 import { capitalizar } from '@/lib/formato';
 
-export default function MotoCard({ moto, prioridad = false }: { moto: Moto; prioridad?: boolean }) {
+export default function MotoCard({ moto, prioridad = false }: { moto: MotoWeb; prioridad?: boolean }) {
   return (
     <Link
       href={`/moto/${moto.slug}`}
@@ -11,7 +12,7 @@ export default function MotoCard({ moto, prioridad = false }: { moto: Moto; prio
     >
       <div className="relative aspect-4/3 overflow-hidden bg-ink-800">
         <MotoImagen
-          slug={moto.slug}
+          foto={moto.miniatura}
           nombre={moto.nombre}
           marca={moto.marca}
           prioridad={prioridad}

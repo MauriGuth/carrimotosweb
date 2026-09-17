@@ -1,9 +1,8 @@
-import { fotosDe } from '@/data/fotos';
-
 type Props = {
-  slug: string;
   nombre: string;
   marca: string;
+  /** Foto chica del modelo. null = todavía no tiene y va el placeholder. */
+  foto: string | null;
   className?: string;
   /** Las imágenes destacadas cargan de entrada, el resto en diferido. */
   prioridad?: boolean;
@@ -27,21 +26,22 @@ export function SinFoto({ marca, nombre, className = '' }: { marca: string; nomb
 
 /**
  * Primera foto del modelo, para las tarjetas del catálogo.
- * Qué modelos tienen foto sale del manifiesto que genera `npm run fotos`, así
- * que acá ya se sabe si hay que mostrar la foto o el placeholder: no hace
- * falta pedir una imagen que no existe ni esperar a que falle.
+ *
+ * La foto llega resuelta desde el servidor, y no se busca acá: este componente
+ * termina dentro del bundle del cliente —lo renderiza la grilla filtrable— y
+ * buscarla significaría mandarle al navegador el catálogo entero de fotos.
+ * Además, así ya se sabe si va la foto o el placeholder: no hace falta pedir
+ * una imagen que no existe ni esperar a que falle.
  */
-export default function MotoImagen({ slug, nombre, marca, className = '', prioridad = false }: Props) {
-  const fotos = fotosDe(slug);
-
-  if (!fotos.length) {
+export default function MotoImagen({ nombre, marca, foto, className = '', prioridad = false }: Props) {
+  if (!foto) {
     return <SinFoto marca={marca} nombre={nombre} className={className} />;
   }
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={fotos[0].mini}
+      src={foto}
       alt={nombre}
       loading={prioridad ? 'eager' : 'lazy'}
       decoding="async"

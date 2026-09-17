@@ -1,22 +1,22 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import VistaCatalogo from '@/components/VistaCatalogo';
-import { CATEGORIAS, MOTOS, type CategoriaSlug } from '@/data/motos';
-import { categoriasConConteo } from '@/lib/catalogo';
+import { CATEGORIAS, type CategoriaSlug } from '@/data/motos';
+import { categoriasConConteo, todasLasMotos } from '@/lib/catalogo';
 
 type Props = { params: Promise<{ categoria: string }> };
 
-export function generateStaticParams() {
-  return categoriasConConteo().map((c) => ({ categoria: c.slug }));
+export async function generateStaticParams() {
+  return (await categoriasConConteo()).map((c) => ({ categoria: c.slug }));
 }
 
-function buscarCategoria(slug: string) {
-  return categoriasConConteo().find((c) => c.slug === slug);
+async function buscarCategoria(slug: string) {
+  return (await categoriasConConteo()).find((c) => c.slug === slug);
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { categoria: slug } = await params;
-  const categoria = buscarCategoria(slug);
+  const categoria = await buscarCategoria(slug);
   if (!categoria) return { title: 'Categoría no encontrada' };
 
   return {
@@ -28,10 +28,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CategoriaPage({ params }: Props) {
   const { categoria: slug } = await params;
-  const categoria = buscarCategoria(slug);
+  const categoria = await buscarCategoria(slug);
   if (!categoria) notFound();
 
-  const total = MOTOS.filter((m) => m.categoria === (slug as CategoriaSlug)).length;
+  const total = (await todasLasMotos()).filter((m) => m.categoria === (slug as CategoriaSlug))
+    .length;
 
   return (
     <VistaCatalogo

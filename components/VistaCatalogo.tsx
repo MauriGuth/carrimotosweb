@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import CatalogoCliente from './CatalogoCliente';
 import Revelar from './Revelar';
-import { MOTOS, type CategoriaSlug } from '@/data/motos';
-import { categoriasConConteo, marcasConConteo } from '@/lib/catalogo';
+import type { CategoriaSlug } from '@/data/motos';
+import { categoriasConConteo, marcasConConteo, todasLasMotos } from '@/lib/catalogo';
 
 type Props = {
   titulo: string;
@@ -17,7 +17,13 @@ type Props = {
  * categoría. Las tres se generan estáticas: el filtro llega como prop desde el
  * servidor, así el HTML ya sale con las motos que corresponden.
  */
-export default function VistaCatalogo({ titulo, bajada, filtroInicial, migas }: Props) {
+export default async function VistaCatalogo({ titulo, bajada, filtroInicial, migas }: Props) {
+  const [motos, categorias, marcas] = await Promise.all([
+    todasLasMotos(),
+    categoriasConConteo(),
+    marcasConConteo(),
+  ]);
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
       {migas && (
@@ -44,9 +50,9 @@ export default function VistaCatalogo({ titulo, bajada, filtroInicial, migas }: 
       </Revelar>
 
       <CatalogoCliente
-        motos={MOTOS}
-        categorias={categoriasConConteo()}
-        marcas={marcasConConteo()}
+        motos={motos}
+        categorias={categorias}
+        marcas={marcas}
         filtroInicial={filtroInicial}
       />
     </div>

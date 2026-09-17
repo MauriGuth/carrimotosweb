@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import VistaCatalogo from '@/components/VistaCatalogo';
-import { MOTOS } from '@/data/motos';
-import { marcasConConteo } from '@/lib/catalogo';
+import { marcasConConteo, todasLasMotos } from '@/lib/catalogo';
 
 export const metadata: Metadata = {
   title: 'Catálogo de motos 0km',
@@ -10,11 +9,12 @@ export const metadata: Metadata = {
   alternates: { canonical: '/catalogo' },
 };
 
-export default function CatalogoPage() {
+export default async function CatalogoPage() {
+  const [motos, marcas] = await Promise.all([todasLasMotos(), marcasConConteo()]);
   return (
     <VistaCatalogo
       titulo="Catálogo"
-      bajada={`${MOTOS.length} modelos de ${marcasConConteo().length} marcas. Filtrá y entrá en la ficha de cada moto para consultar precio y disponibilidad.`}
+      bajada={`${motos.length} modelos de ${marcas.length} marcas. Filtrá y entrá en la ficha de cada moto para consultar precio y disponibilidad.`}
     />
   );
 }

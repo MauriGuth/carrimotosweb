@@ -4,10 +4,11 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import MotoCard from './MotoCard';
 import RevelarGrilla from './RevelarGrilla';
-import { CATEGORIAS, type CategoriaSlug, type Moto } from '@/data/motos';
+import { CATEGORIAS, type CategoriaSlug } from '@/data/motos';
+import type { MotoWeb } from '@/lib/catalogo';
 
 type Props = {
-  motos: Moto[];
+  motos: MotoWeb[];
   categorias: { slug: CategoriaSlug; nombre: string; total: number }[];
   marcas: { marca: string; slug: string; total: number }[];
   /**
