@@ -121,21 +121,36 @@ function emparejar(nombreArchivo) {
 /* Procesar la imagen                                                */
 /* ---------------------------------------------------------------- */
 
+/** Debajo de esto la imagen tiene transparencia de verdad, no un borde suelto. */
+const ALFA_DE_RECORTE = 250;
+
 /**
- * ¿Es un recorte de estudio? Mira las dos esquinas de arriba y da por estudio
- * dos casos:
+ * ¿Es un recorte de estudio? Da por estudio dos casos:
  *
  *   · Fondo transparente. Los PNG que mandan los importadores vienen con la
  *     moto recortada sobre alfa. Si no se mira el canal alfa, el RGB de abajo
  *     es basura (casi siempre negro) y la foto termina sobre fondo NEGRO al
  *     pasarla a JPG, que es justo lo contrario de lo que se busca.
- *   · Fondo blanco liso, el recorte ya aplanado sobre blanco.
+ *
+ *     Se mide sobre la imagen entera y no sobre las esquinas: en una moto de
+ *     frente los espejos llegan hasta arriba de todo, la esquina deja de estar
+ *     vacía y el recorte pasaría por foto.
+ *
+ *   · Fondo blanco liso, el recorte ya aplanado sobre blanco. Ese sí se mira
+ *     por las esquinas de arriba, que es donde una foto de verdad tendría
+ *     pared, cielo o el resto del salón.
  *
  * Cualquier otra cosa es una foto de verdad (salón, calle, pista).
  */
 async function esRecorteDeEstudio(origen) {
   try {
-    const { width = 100, height = 100 } = await sharp(origen).metadata();
+    const { width = 100, height = 100, hasAlpha } = await sharp(origen).metadata();
+
+    if (hasAlpha) {
+      const alfa = (await sharp(origen).stats()).channels[3];
+      if (alfa && alfa.mean < ALFA_DE_RECORTE) return true;
+    }
+
     const ancho = Math.max(1, Math.floor(width * 0.15));
     const alto = Math.max(1, Math.floor(height * 0.1));
 
@@ -155,6 +170,7 @@ async function esRecorteDeEstudio(origen) {
       const transparente = alfa ? alfa.max < 16 : false;
       const blanco = channels.slice(0, 3).every((c) => c.mean > 240 && c.stdev < 12);
       if (!transparente && !blanco) return false;
+
     }
     return true;
   } catch {
@@ -162,6 +178,15 @@ async function esRecorteDeEstudio(origen) {
   }
 }
 
+/**
+ * Deja una foto lista. Devuelve el tipo y, si la original era más chica que
+ * el encuadre, cuánto hubo que estirarla.
+ *
+ * Todas salen del mismo tamaño aunque la original venga en baja: una moto
+ * chiquita flotando en un marco blanco se ve rota al lado de las demás, y es
+ * peor que una foto un poco blanda. Las que hubo que estirar se avisan al
+ * final para poder pedirle el archivo bueno al importador.
+ */
 async function procesar(origen, destino, destinoMini) {
   const estudio = await esRecorteDeEstudio(origen);
 
@@ -174,23 +199,39 @@ async function procesar(origen, destino, destinoMini) {
       .toBuffer()
       .catch(() => base.toBuffer());
 
+    const caja = { ancho: Math.round(ANCHO * 0.88), alto: Math.round(ALTO * 0.88) };
+    const { width = caja.ancho, height = caja.alto } = await sharp(recortada).metadata();
+
     await sharp(recortada)
-      .resize(Math.round(ANCHO * 0.88), Math.round(ALTO * 0.88), { fit: 'inside', withoutEnlargement: true })
+      .resize(caja.ancho, caja.alto, { fit: 'inside' })
       .resize(ANCHO, ALTO, { fit: 'contain', background: '#ffffff' })
       .jpeg({ quality: CALIDAD, mozjpeg: true })
       .toFile(destino);
     await hacerMini(destino, destinoMini);
-    return 'estudio';
+
+    // Encaje 'inside': entra entera, manda el lado que primero toca el borde.
+    return { tipo: 'estudio', estirada: estiron(Math.min(caja.ancho / width, caja.alto / height), width, height) };
   }
 
   // Foto del salón: recorta al encuadre, sin barras blancas.
+  const { width = ANCHO, height = ALTO } = await sharp(origen).metadata();
   await sharp(origen)
     .rotate() // respeta la orientación EXIF del celular
     .resize(ANCHO, ALTO, { fit: 'cover', position: 'center' })
     .jpeg({ quality: CALIDAD, mozjpeg: true })
     .toFile(destino);
   await hacerMini(destino, destinoMini);
-  return 'foto';
+
+  // Encaje 'cover': llena el marco, manda el lado que sobra menos.
+  return { tipo: 'foto', estirada: estiron(Math.max(ANCHO / width, ALTO / height), width, height) };
+}
+
+/** Se avisa a partir de acá: por debajo el estirón no se nota. */
+const ESTIRON_QUE_SE_NOTA = 1.15;
+
+/** Describe el estirón si la original no daba el tamaño. null si daba. */
+function estiron(factor, ancho, alto) {
+  return factor > ESTIRON_QUE_SE_NOTA ? { factor, ancho, alto } : null;
 }
 
 async function hacerMini(origen, destino) {
@@ -312,6 +353,7 @@ async function main() {
   }
 
   const { grupos, revisar } = planificar();
+  const estiradas = [];
   for (const aviso of reordenar(grupos)) console.warn(`  ! ${aviso}`);
 
   if (!grupos.size && !revisar.length) {
@@ -347,7 +389,15 @@ async function main() {
         ? path.join(dirDestino, 'mini', `${i + 1}.jpg`)
         : path.join(SALIDA, 'mini', `${slug}.jpg`);
       try {
-        tipos.push(await procesar(origen, destino, destinoMini));
+        const r = await procesar(origen, destino, destinoMini);
+        tipos.push(r.tipo);
+        if (r.estirada) {
+          estiradas.push({
+            foto: galeria ? `${slug}/${i + 1}.jpg` : `${slug}.jpg`,
+            origen: path.basename(origen),
+            ...r.estirada,
+          });
+        }
       } catch (e) {
         revisar.push({ archivo: path.basename(origen), motivo: e.message });
       }
@@ -370,6 +420,14 @@ async function main() {
     console.log(`\nPara revisar a mano: ${revisar.length}`);
     for (const r of revisar) console.log(`  ${r.archivo}  →  ${r.motivo}`);
     console.log(`\n  Renombralos con marca y modelo, o ponelos en una carpeta con el slug del modelo.`);
+  }
+
+  if (estiradas.length) {
+    console.log(`\nVienen en baja y hubo que estirarlas: ${estiradas.length}`);
+    for (const e of estiradas) {
+      console.log(`  ${e.foto}  (${e.origen}: ${e.ancho}x${e.alto}, x${e.factor.toFixed(1)})`);
+    }
+    console.log(`\n  Se publican igual, pero conviene pedirle el archivo grande al importador.`);
   }
 
   const total = MOTOS.length;

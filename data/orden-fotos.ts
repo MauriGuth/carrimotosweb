@@ -53,4 +53,30 @@ export const ORDEN_FOTOS: Record<string, number[]> = {
     11, 12, 16, 17, 18, 19, 25, 13,
     9, 20, 21, 22,
   ],
+
+  // ── CFMOTO ────────────────────────────────────────────────────────────
+  // Las del salón primero; el resto son primeros planos del mismo lugar.
+  'cfmoto-nk-650': [20, 1, 21, 11, 5, 18, 12, 16, 6, 19, 7, 17, 2, 13, 15, 4, 14, 3, 8, 9, 10],
+  // Los dos recortes sobre blanco adelante, que en la tarjeta se ven mejor
+  // que la foto contra la pared de ladrillos.
+  'cfmoto-nk-300': [4, 5, 1, 7, 6, 13, 2, 3, 12, 8, 9, 11, 10],
+  'cfmoto-nk-400': [6, 7, 8, 9, 3, 4, 5, 1, 2, 10, 13, 12, 11, 14, 15, 16],
+  'cfmoto-mt-650': [1, 10, 11, 4, 2, 14, 6, 3, 13, 5, 7, 12, 8, 9],
+
+  // ── CORVEN ────────────────────────────────────────────────────────────
+  'corven-triax-150': [1, 2, 3, 4, 10, 5, 6, 8, 7, 9],
+
+  // ── GILERA ────────────────────────────────────────────────────────────
+  // Son fotos del salón y todas siguen el mismo patrón: la moto entera al
+  // principio y al final, con los primeros planos en el medio. Se juntan las
+  // de la moto entera arriba.
+  'gilera-smx-200': [1, 2, 16, 17, 11, 6, 7, 14, 15, 3, 4, 5, 13, 9, 10, 8, 12],
+  'gilera-smx-200-adventure': [1, 2, 15, 16, 11, 8, 9, 10, 13, 14, 3, 4, 5, 12, 6, 7],
+  'gilera-vc-150-r-d': [1, 2, 3, 18, 19, 20, 4, 6, 12, 11, 7, 8, 9, 13, 10, 5, 14, 15, 16, 17],
+  'gilera-ac-250-4v': [1, 2, 18, 19, 6, 12, 17, 15, 13, 3, 4, 16, 5, 14, 7, 8, 9, 10, 11],
+  'gilera-smash-full-cbs': [1, 2, 3, 4, 19, 20, 21, 22, 15, 16, 10, 13, 9, 5, 6, 7, 8, 11, 12, 14, 17, 18],
+  'gilera-smash-automatica': [1, 2, 3, 18, 19, 20, 14, 4, 17, 16, 6, 15, 7, 8, 9, 5, 10, 11, 12, 13],
+  'gilera-smash-125-cbs': [1, 2, 20, 21, 17, 18, 16, 3, 4, 19, 5, 6, 7, 8, 13, 15, 14, 9, 10, 11, 12],
+  'gilera-smash-vs-cbs': [1, 2, 18, 19, 17, 3, 15, 5, 16, 4, 6, 14, 11, 13, 12, 7, 9, 8, 10],
+  'gilera-smash-r-full': [1, 2, 15, 3, 14, 13, 5, 12, 11, 4, 6, 7, 9, 10, 8],
 };
