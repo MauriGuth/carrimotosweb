@@ -213,18 +213,29 @@ async function procesar(origen, destino, destinoMini) {
     return { tipo: 'estudio', estirada: estiron(Math.min(caja.ancho / width, caja.alto / height), width, height) };
   }
 
-  // Foto del salón: recorta al encuadre, sin barras blancas.
+  // Foto del salón: recorta al encuadre, sin barras blancas. Salvo que
+  // recortar se lleve puesta media imagen —los importadores meten tiras
+  // panorámicas con cuatro detalles al hilo, y el encuadre 4:3 agarra dos y
+  // parece un error—: ahí entra entera sobre blanco.
   const { width = ANCHO, height = ALTO } = await sharp(origen).metadata();
+  const queda = Math.min(width / height, ANCHO / ALTO) / Math.max(width / height, ANCHO / ALTO);
+  const entera = queda < SE_PIERDE_DEMASIADO;
+
   await sharp(origen)
     .rotate() // respeta la orientación EXIF del celular
-    .resize(ANCHO, ALTO, { fit: 'cover', position: 'center' })
+    .resize(ANCHO, ALTO, entera ? { fit: 'contain', background: '#ffffff' } : { fit: 'cover', position: 'center' })
     .jpeg({ quality: CALIDAD, mozjpeg: true })
     .toFile(destino);
   await hacerMini(destino, destinoMini);
 
-  // Encaje 'cover': llena el marco, manda el lado que sobra menos.
-  return { tipo: 'foto', estirada: estiron(Math.max(ANCHO / width, ALTO / height), width, height) };
+  const factor = entera
+    ? Math.min(ANCHO / width, ALTO / height) // 'contain': entra entera
+    : Math.max(ANCHO / width, ALTO / height); // 'cover': llena el marco
+  return { tipo: 'foto', estirada: estiron(factor, width, height) };
 }
+
+/** Si al recortar al encuadre queda menos que esto, se muestra entera. */
+const SE_PIERDE_DEMASIADO = 0.6;
 
 /** Se avisa a partir de acá: por debajo el estirón no se nota. */
 const ESTIRON_QUE_SE_NOTA = 1.15;
