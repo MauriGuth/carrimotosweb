@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SinFoto } from './MotoImagen';
 import type { Foto } from '@/data/fotos';
+import VisorFotos from './VisorFotos';
 
 type Props = {
   fotos: Foto[];
@@ -20,6 +21,7 @@ const UMBRAL_DESLIZAR = 50;
  */
 export default function GaleriaMoto({ fotos, nombre, marca }: Props) {
   const [activa, setActiva] = useState(0);
+  const [visorAbierto, setVisorAbierto] = useState(false);
   const contenedor = useRef<HTMLDivElement>(null);
   const inicioX = useRef<number | null>(null);
 
@@ -34,9 +36,12 @@ export default function GaleriaMoto({ fotos, nombre, marca }: Props) {
   );
 
   // Flechas del teclado, sólo cuando el foco está dentro de la galería.
+  // Con el visor abierto no hace nada: el visor tiene su propio manejador y,
+  // como se monta acá adentro, el evento burbujea hasta este nodo y la foto
+  // avanzaría dos lugares por cada tecla.
   useEffect(() => {
     const nodo = contenedor.current;
-    if (!nodo || total < 2) return;
+    if (!nodo || total < 2 || visorAbierto) return;
 
     const alTeclear = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
@@ -50,7 +55,7 @@ export default function GaleriaMoto({ fotos, nombre, marca }: Props) {
 
     nodo.addEventListener('keydown', alTeclear);
     return () => nodo.removeEventListener('keydown', alTeclear);
-  }, [ir, total]);
+  }, [ir, total, visorAbierto]);
 
   if (!total) {
     return (
@@ -83,14 +88,33 @@ export default function GaleriaMoto({ fotos, nombre, marca }: Props) {
           inicioX.current = null;
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={fotos[activa].grande}
-          alt={`${nombre} — foto ${activa + 1} de ${total}`}
-          className="h-full w-full object-cover"
-          loading="eager"
-          decoding="async"
-        />
+        <button
+          type="button"
+          onClick={() => setVisorAbierto(true)}
+          aria-label={`Ampliar foto ${activa + 1} de ${total}`}
+          className="block h-full w-full cursor-zoom-in"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={fotos[activa].grande}
+            alt={`${nombre} — foto ${activa + 1} de ${total}`}
+            className="h-full w-full object-cover"
+            loading="eager"
+            decoding="async"
+          />
+        </button>
+
+        {/* Pista de que la foto se puede ampliar */}
+        <span
+          className="pointer-events-none absolute bottom-3 left-3 flex items-center gap-1.5 rounded bg-ink-950/80 px-2.5 py-1 text-[11px] text-mist-200 backdrop-blur-sm transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+          aria-hidden="true"
+        >
+          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5M11 8v6M8 11h6" />
+          </svg>
+          Ampliar
+        </span>
 
         {variasFotos && (
           <>
@@ -103,6 +127,16 @@ export default function GaleriaMoto({ fotos, nombre, marca }: Props) {
           </>
         )}
       </div>
+
+      {visorAbierto && (
+        <VisorFotos
+          fotos={fotos}
+          activa={activa}
+          nombre={nombre}
+          onCambiar={setActiva}
+          onCerrar={() => setVisorAbierto(false)}
+        />
+      )}
 
       {variasFotos && (
         <div className="mt-3 grid grid-cols-5 gap-2 sm:grid-cols-6">

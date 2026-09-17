@@ -72,6 +72,10 @@ export default function Revelar({
           delay: retraso,
           stagger: escalonar ? ESCALONADO : 0,
           overwrite: 'auto',
+          // Al terminar se borran las propiedades que puso la animación. Un
+          // transform residual crea un contenedor para los elementos `fixed`
+          // que estén adentro, y eso rompe cualquier modal o visor.
+          clearProps: 'opacity,transform',
           ...(inmediato
             ? {}
             : { scrollTrigger: { trigger: nodo, start: 'top 85%', once: true } }),

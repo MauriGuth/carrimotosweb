@@ -46,6 +46,9 @@ export default function RevelarGrilla({ children, className, clave }: Props) {
             ease: EASE,
             stagger: 0.06,
             overwrite: true,
+            // Que no quede un transform colgado: crea un contenedor para los
+            // elementos `fixed` de adentro y rompería cualquier modal.
+            clearProps: 'opacity,transform',
           }),
       });
 
