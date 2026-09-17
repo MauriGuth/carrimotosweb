@@ -4,6 +4,9 @@
  * Para agregar un campo nuevo: sumalo acá y agregá una columna con el mismo
  * `columna` en la hoja FICHA de la planilla. El resto —el tipo, el importador
  * y la tabla de la web— sale de esta lista.
+ *
+ * La garantía no va: aunque la planilla traiga una columna GARANTIA, no está
+ * en esta lista, así que el importador la ignora y no aparece en ninguna ficha.
  */
 export const CAMPOS_FICHA = [
   { clave: 'motor', etiqueta: 'Motor', columna: 'MOTOR' },
@@ -25,7 +28,6 @@ export const CAMPOS_FICHA = [
   { clave: 'alto', etiqueta: 'Alto', columna: 'ALTO' },
   { clave: 'alturaAsiento', etiqueta: 'Altura del asiento', columna: 'ALTURA ASIENTO' },
   { clave: 'alarma', etiqueta: 'Alarma', columna: 'ALARMA' },
-  { clave: 'garantia', etiqueta: 'Garantía', columna: 'GARANTIA' },
   { clave: 'equipamiento', etiqueta: 'Equipamiento', columna: 'EQUIPAMIENTO' },
 ] as const;
 
