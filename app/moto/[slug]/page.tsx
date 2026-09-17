@@ -20,6 +20,17 @@ import {
 import FichaTecnica from '@/components/FichaTecnica';
 import { capitalizar } from '@/lib/formato';
 
+/**
+ * El catálogo sale de Nova y el cliente lo edita desde el panel, así que esta
+ * página se vuelve a generar cada minuto.
+ *
+ * Tiene que estar acá, en la página: el `revalidate` del fetch de lib/catalogo
+ * NO alcanza. Sin este export Next la prerenderiza y la deja estática para
+ * siempre, y lo que el cliente cambia en Nova recién se ve en el próximo
+ * deploy. (Se vio en producción: una foto nueva no aparecía nunca.)
+ */
+export const revalidate = 60;
+
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateStaticParams() {
